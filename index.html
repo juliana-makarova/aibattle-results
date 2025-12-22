@@ -175,7 +175,8 @@
 
         .media-content {
             width: 100%;
-            aspect-ratio: 16/9;
+            /* Дефолт: квадрат 1:1, но JS ниже переопределит на реальный aspect-ratio изображения/видео */
+            aspect-ratio: 1 / 1;
             background: #000;
             border-radius: 4px;
             display: flex;
@@ -191,7 +192,7 @@
         .media-content iframe {
             width: 100%;
             height: 100%;
-            object-fit: cover;
+            object-fit: contain;
         }
 
         /* VOTING SECTION */
@@ -232,10 +233,11 @@
             display: flex;
             gap: 5px;
             justify-content: center;
+            flex-wrap: wrap;
         }
 
         .star {
-            font-size: 32px;
+            font-size: 28px;
             cursor: pointer;
             color: #333;
             transition: all 0.2s;
@@ -559,9 +561,10 @@ const BATTLES_CONFIG = {
 
 let currentBattle = 1;
 // Важно: без регистрации и сервера мы можем ограничить "1 голос" только в рамках одного браузера (localStorage).
-// Формат: { [participantId]: { creativity: 1..5, applicability: 1..5, timestamp } }
-const VOTES_KEY = 'ai_battles_votes_v3';
+// Формат: { [participantId]: { creativity: 1..10, applicability: 1..10, timestamp } }
+const VOTES_KEY = 'ai_battles_votes_v4';
 const LEGACY_VOTES_KEY_V2 = 'ai_battles_votes_v2';
+const LEGACY_VOTES_KEY_V3 = 'ai_battles_votes_v3';
 const votes = loadVotes();
 
 function loadVotes() {
@@ -569,6 +572,14 @@ function loadVotes() {
         const raw = localStorage.getItem(VOTES_KEY);
         const parsed = raw ? JSON.parse(raw) : null;
         if (parsed && typeof parsed === 'object') return parsed;
+
+        // Миграция со схемы v3 (2 критерия, но 1..5) — просто копируем значения как есть.
+        const legacyV3Raw = localStorage.getItem(LEGACY_VOTES_KEY_V3);
+        const legacyV3Parsed = legacyV3Raw ? JSON.parse(legacyV3Raw) : null;
+        if (legacyV3Parsed && typeof legacyV3Parsed === 'object') {
+            localStorage.setItem(VOTES_KEY, JSON.stringify(legacyV3Parsed));
+            return legacyV3Parsed;
+        }
 
         // Миграция со старой схемы v2 (1 число) — кладём в оба критерия одинаковое значение.
         const legacyRaw = localStorage.getItem(LEGACY_VOTES_KEY_V2);
@@ -662,11 +673,11 @@ function createParticipantCard(participant) {
             <div class="participant-scores">
                 <div class="score-item">
                     <div class="score-label">Креативность</div>
-                    <div class="score-value" data-score-participant="${participant.id}" data-score-criteria="creativity">${myVote ? `${myVote.creativity}/5` : '—'}</div>
+                    <div class="score-value" data-score-participant="${participant.id}" data-score-criteria="creativity">${myVote ? `${myVote.creativity}/10` : '—'}</div>
                 </div>
                 <div class="score-item">
                     <div class="score-label">Применимость</div>
-                    <div class="score-value" data-score-participant="${participant.id}" data-score-criteria="applicability">${myVote ? `${myVote.applicability}/5` : '—'}</div>
+                    <div class="score-value" data-score-participant="${participant.id}" data-score-criteria="applicability">${myVote ? `${myVote.applicability}/10` : '—'}</div>
                 </div>
             </div>
         </div>
@@ -697,20 +708,20 @@ function createParticipantCard(participant) {
             <div class="voting-criteria">
                 <div class="criteria-item">
                     <div class="criteria-label">
-                        <span>Креативность</span>
+                        <span>Креативность (1–10)</span>
                         <span class="selected-value" data-criteria="creativity">—</span>
                     </div>
                     <div class="stars" data-participant="${participant.id}" data-criteria="creativity">
-                        ${generateStars(5)}
+                        ${generateStars(10)}
                     </div>
                 </div>
                 <div class="criteria-item">
                     <div class="criteria-label">
-                        <span>Применимость</span>
+                        <span>Применимость (1–10)</span>
                         <span class="selected-value" data-criteria="applicability">—</span>
                     </div>
                     <div class="stars" data-participant="${participant.id}" data-criteria="applicability">
-                        ${generateStars(5)}
+                        ${generateStars(10)}
                     </div>
                 </div>
             </div>
@@ -742,8 +753,47 @@ function createParticipantCard(participant) {
     // Добавляем обработчики голосования и комментариев
     setupVoting(card, participant.id);
     setupCommentForm(card, participant.id);
+    setupMediaAspect(card);
     
     return card;
+}
+
+// Подстройка aspect-ratio под реальные размеры картинки/видео (по умолчанию 1:1, см. CSS)
+function setupMediaAspect(card) {
+    const mediaContents = card.querySelectorAll('.media-content');
+
+    function setAspect(el, w, h) {
+        if (!w || !h) return;
+        el.style.aspectRatio = `${w} / ${h}`;
+    }
+
+    mediaContents.forEach(content => {
+        const img = content.querySelector('img');
+        if (img) {
+            if (img.complete && img.naturalWidth && img.naturalHeight) {
+                setAspect(content, img.naturalWidth, img.naturalHeight);
+            } else {
+                img.addEventListener('load', () => setAspect(content, img.naturalWidth, img.naturalHeight), { once: true });
+            }
+            return;
+        }
+
+        const video = content.querySelector('video');
+        if (video) {
+            if (video.videoWidth && video.videoHeight) {
+                setAspect(content, video.videoWidth, video.videoHeight);
+            } else {
+                video.addEventListener('loadedmetadata', () => setAspect(content, video.videoWidth, video.videoHeight), { once: true });
+            }
+            return;
+        }
+
+        const iframe = content.querySelector('iframe');
+        if (iframe) {
+            // Для embed-ов обычно 16:9
+            content.style.aspectRatio = '16 / 9';
+        }
+    });
 }
 
 // Рендер медиа
@@ -772,7 +822,7 @@ function renderMedia(media) {
 }
 
 // Генерация звёзд
-function generateStars(max = 5) {
+function generateStars(max = 10) {
     let html = '';
     for (let i = 1; i <= max; i++) {
         html += `<span class="star" data-value="${i}">★</span>`;
@@ -820,7 +870,7 @@ function setupVoting(card, participantId) {
         return;
     }
 
-    // Обработка кликов по звёздам (1..5) для каждого критерия
+    // Обработка кликов по звёздам (1..10) для каждого критерия
     starsContainers.forEach(container => {
         const criteria = container.dataset.criteria;
         const stars = container.querySelectorAll('.star');
@@ -829,7 +879,7 @@ function setupVoting(card, participantId) {
         stars.forEach(star => {
             star.addEventListener('click', () => {
                 const value = parseInt(star.dataset.value, 10);
-                if (!value) return;
+                if (!value || value < 1 || value > 10) return;
                 selectedVotes[criteria] = value;
                 setStarsUI(stars, value);
                 if (span) span.textContent = value;
@@ -878,8 +928,8 @@ function updateUserScore(participantId) {
     const vote = getUserVote(participantId);
     const elC = document.querySelector(`.score-value[data-score-participant="${participantId}"][data-score-criteria="creativity"]`);
     const elA = document.querySelector(`.score-value[data-score-participant="${participantId}"][data-score-criteria="applicability"]`);
-    if (elC) elC.textContent = vote ? `${vote.creativity}/5` : '—';
-    if (elA) elA.textContent = vote ? `${vote.applicability}/5` : '—';
+    if (elC) elC.textContent = vote ? `${vote.creativity}/10` : '—';
+    if (elA) elA.textContent = vote ? `${vote.applicability}/10` : '—';
 }
 
 // Извлечение YouTube ID
