@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI-Battles | Голосование</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0a0a;
+            color: #ffffff;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* HEADER */
+        .header {
+            text-align: center;
+            padding: 40px 20px;
+            border-bottom: 2px solid #ff0066;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 48px;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #ff0066, #6600ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header .battle-number {
+            font-size: 24px;
+            color: #888;
+            margin-bottom: 20px;
+        }
+
+        /* TABS */
+        .tabs {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            padding: 12px 30px;
+            background: #1a1a1a;
+            border: 2px solid #333;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .tab:hover {
+            border-color: #ff0066;
+        }
+
+        .tab.active {
+            background: linear-gradient(135deg, #ff0066, #6600ff);
+            border-color: transparent;
+        }
+
+        /* TASK BRIEF */
+        .task-brief {
+            background: #1a1a1a;
+            border: 2px solid #333;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 40px;
+        }
+
+        .task-brief h2 {
+            color: #ff0066;
+            margin-bottom: 15px;
+            font-size: 28px;
+        }
+
+        .task-brief p {
+            line-height: 1.8;
+            color: #ccc;
+            font-size: 16px;
+        }
+
+        /* PARTICIPANTS */
+        .participants {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .participant-card {
+            background: #1a1a1a;
+            border: 2px solid #333;
+            border-radius: 12px;
+            padding: 30px;
+            transition: all 0.3s;
+        }
+
+        .participant-card:hover {
+            border-color: #ff0066;
+            box-shadow: 0 0 30px rgba(255, 0, 102, 0.2);
+        }
+
+        .participant-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .participant-name {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .participant-scores {
+            display: flex;
+            gap: 20px;
+            font-size: 14px;
+        }
+
+        .score-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .score-label {
+            color: #888;
+            margin-bottom: 5px;
+        }
+
+        .score-value {
+            font-size: 20px;
+            font-weight: bold;
+            color: #ff0066;
+        }
+
+        /* MEDIA GRID */
+        .media-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .media-item {
+            background: #0a0a0a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 15px;
+        }
+
+        .media-label {
+            font-size: 12px;
+            color: #888;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+
+        .media-content {
+            width: 100%;
+            aspect-ratio: 16/9;
+            background: #000;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #555;
+            font-size: 14px;
+            overflow: hidden;
+        }
+
+        .media-content img,
+        .media-content video,
+        .media-content iframe {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* VOTING SECTION */
+        .voting-section {
+            background: #0f0f0f;
+            border: 2px solid #444;
+            border-radius: 8px;
+            padding: 25px;
+        }
+
+        .voting-title {
+            font-size: 18px;
+            margin-bottom: 20px;
+            text-align: center;
+            color: #ff0066;
+        }
+
+        .voting-criteria {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+
+        .criteria-item {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .criteria-label {
+            font-size: 14px;
+            color: #ccc;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .stars {
+            display: flex;
+            gap: 5px;
+            justify-content: center;
+        }
+
+        .star {
+            font-size: 32px;
+            cursor: pointer;
+            color: #333;
+            transition: all 0.2s;
+            user-select: none;
+        }
+
+        .star:hover,
+        .star.active {
+            color: #ffcc00;
+            transform: scale(1.1);
+        }
+
+        .submit-vote {
+            margin-top: 20px;
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #ff0066, #6600ff);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .submit-vote:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(255, 0, 102, 0.5);
+        }
+
+        .submit-vote:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .vote-success {
+            text-align: center;
+            color: #00ff88;
+            margin-top: 15px;
+            font-weight: bold;
+        }
+
+        /* MOBILE */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 32px;
+            }
+
+            .media-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .participant-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .star {
+                font-size: 28px;
+            }
+
+            .tabs {
+                flex-direction: column;
+            }
+
+            .tab {
+                width: 100%;
+                text-align: center;
+            }
+        }
+
+        /* FOOTER */
+        /* COMMENTS SECTION */
+        .comments-section {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 2px solid #333;
+        }
+
+        .comments-title {
+            font-size: 20px;
+            margin-bottom: 20px;
+            color: #ff0066;
+        }
+
+        .comment-form {
+            background: #0f0f0f;
+            border: 2px solid #444;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+
+        .comment-input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .comment-input {
+            padding: 10px 15px;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 6px;
+            color: #fff;
+            font-size: 14px;
+            font-family: inherit;
+        }
+
+        .comment-input:focus {
+            outline: none;
+            border-color: #ff0066;
+        }
+
+        .comment-textarea {
+            padding: 12px 15px;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 6px;
+            color: #fff;
+            font-size: 14px;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .comment-textarea:focus {
+            outline: none;
+            border-color: #ff0066;
+        }
+
+        .submit-comment {
+            padding: 12px 25px;
+            background: linear-gradient(135deg, #ff0066, #6600ff);
+            border: none;
+            border-radius: 6px;
+            color: white;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .submit-comment:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(255, 0, 102, 0.5);
+        }
+
+        .comments-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .comment-item {
+            background: #0f0f0f;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 15px;
+        }
+
+        .comment-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .comment-author {
+            font-weight: bold;
+            color: #ff0066;
+            font-size: 14px;
+        }
+
+        .comment-date {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .comment-text {
+            color: #ccc;
+            line-height: 1.6;
+            font-size: 14px;
+            word-wrap: break-word;
+        }
+
+        .no-comments {
+            text-align: center;
+            color: #666;
+            padding: 20px;
+            font-style: italic;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 40px 20px;
+            margin-top: 60px;
+            color: #666;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- HEADER -->
+    <div class="header">
+        <h1>AI-BATTLES</h1>
+        <div class="battle-number">Раунд 2 | HoReCa</div>
+    </div>
+
+    <!-- TABS -->
+    <div class="tabs">
+        <div class="tab active" data-battle="1">Батл #1: Брендинг</div>
+        <div class="tab" data-battle="2">Батл #2: Кейтеринг</div>
+        <div class="tab" data-battle="3">Батл #3: Доставка</div>
+    </div>
+
+    <!-- TASK BRIEF -->
+    <div class="task-brief">
+        <h2>Техническое задание</h2>
+        <p id="task-description">
+            Разработать концепцию брендинга для нового ресторана премиум-класса в центре Сочи. 
+            Целевая аудитория: бизнес-туристы и состоятельные местные жители 30-50 лет. 
+            Нужно создать: логотип, фирменный стиль, концепцию интерьера.
+        </p>
+    </div>
+
+    <!-- PARTICIPANTS -->
+    <div class="participants" id="participants-container">
+        <!-- Карточки участников генерируются JS -->
+    </div>
+
+    <!-- FOOTER -->
+    <div class="footer">
+        AI-Battles © 2024 | Эксперты решают задачи бизнеса
+    </div>
+</div>
+
+<script>
+// ========================================
+// КОНФИГУРАЦИЯ КОНТЕНТА
+// Редактируй этот объект для изменения контента
+// ========================================
+
+const BATTLES_CONFIG = {
+    1: {
+        title: "Батл #1: Брендинг",
+        task: "Разработать концепцию брендинга для нового ресторана премиум-класса в центре Сочи. Целевая аудитория: бизнес-туристы и состоятельные местные жители 30-50 лет. Нужно создать: логотип, фирменный стиль, концепцию интерьера.",
+        participants: [
+            {
+                id: "p1_b1",
+                name: "Анна Иванова",
+                result: {
+                    type: "image",
+                    url: "https://via.placeholder.com/800x450/ff0066/ffffff?text=Результат+1"
+                },
+                screencast: {
+                    type: "video",
+                    url: "https://via.placeholder.com/800x450/6600ff/ffffff?text=Скринкаст+1"
+                },
+                presentation: {
+                    type: "video",
+                    url: "https://via.placeholder.com/800x450/00ff88/000000?text=Презентация+1"
+                }
+            },
+            {
+                id: "p2_b1",
+                name: "Дмитрий Петров",
+                result: {
+                    type: "image",
+                    url: "https://via.placeholder.com/800x450/ff0066/ffffff?text=Результат+2"
+                },
+                screencast: {
+                    type: "video",
+                    url: "https://via.placeholder.com/800x450/6600ff/ffffff?text=Скринкаст+2"
+                },
+                presentation: {
+                    type: "video",
+                    url: "https://via.placeholder.com/800x450/00ff88/000000?text=Презентация+2"
+                }
+            }
+        ]
+    },
+    2: {
+        title: "Батл #2: Кейтеринг",
+        task: "Разработать меню и стратегию продвижения кейтеринговых услуг для корпоративных мероприятий. Бюджет клиента: 500-1000 рублей на человека.",
+        participants: [
+            {
+                id: "p1_b2",
+                name: "Елена Смирнова",
+                result: {
+                    type: "image",
+                    url: "https://via.placeholder.com/800x450/ff0066/ffffff?text=Результат+Батл2"
+                },
+                screencast: {
+                    type: "video",
+                    url: "https://via.placeholder.com/800x450/6600ff/ffffff?text=Скринкаст+Батл2"
+                },
+                presentation: {
+                    type: "video",
+                    url: "https://via.placeholder.com/800x450/00ff88/000000?text=Презентация+Батл2"
+                }
+            }
+        ]
+    },
+    3: {
+        title: "Батл #3: Доставка",
+        task: "Оптимизировать процесс доставки еды для ресторана. Текущие проблемы: долгие сроки, холодная еда, высокая стоимость. Нужно предложить решение.",
+        participants: []
+    }
+};
+
+// ========================================
+// ЛОГИКА ГОЛОСОВАНИЯ
+// ========================================
+
+let currentBattle = 1;
+const votes = {}; // Хранение голосов: {participantId: {creativity: 8, applicability: 9}}
+
+// Инициализация
+document.addEventListener('DOMContentLoaded', () => {
+    renderBattle(currentBattle);
+    setupTabs();
+});
+
+// Переключение табов
+function setupTabs() {
+    const tabs = document.querySelectorAll('.tab');
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            tabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            currentBattle = parseInt(tab.dataset.battle);
+            renderBattle(currentBattle);
+        });
+    });
+}
+
+// Рендер батла
+function renderBattle(battleId) {
+    const battle = BATTLES_CONFIG[battleId];
+    
+    // Обновляем ТЗ
+    document.getElementById('task-description').textContent = battle.task;
+    
+    // Рендерим участников
+    const container = document.getElementById('participants-container');
+    container.innerHTML = '';
+    
+    if (battle.participants.length === 0) {
+        container.innerHTML = '<div style="text-align:center; padding:60px; color:#666;">Участники скоро появятся</div>';
+        return;
+    }
+    
+    battle.participants.forEach(participant => {
+        container.appendChild(createParticipantCard(participant));
+    });
+}
+
+// Создание карточки участника
+function createParticipantCard(participant) {
+    const card = document.createElement('div');
+    card.className = 'participant-card';
+    
+    // Получаем средние оценки
+    const scores = calculateAverageScores(participant.id);
+    
+    card.innerHTML = `
+        <div class="participant-header">
+            <div class="participant-name">${participant.name}</div>
+            <div class="participant-scores">
+                <div class="score-item">
+                    <div class="score-label">Креативность</div>
+                    <div class="score-value">${scores.creativity}</div>
+                </div>
+                <div class="score-item">
+                    <div class="score-label">Применимость</div>
+                    <div class="score-value">${scores.applicability}</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="media-grid">
+            <div class="media-item">
+                <div class="media-label">Результат</div>
+                <div class="media-content">
+                    ${renderMedia(participant.result)}
+                </div>
+            </div>
+            <div class="media-item">
+                <div class="media-label">Скринкаст процесса</div>
+                <div class="media-content">
+                    ${renderMedia(participant.screencast)}
+                </div>
+            </div>
+            <div class="media-item">
+                <div class="media-label">Видео-презентация</div>
+                <div class="media-content">
+                    ${renderMedia(participant.presentation)}
+                </div>
+            </div>
+        </div>
+        
+        <div class="voting-section">
+            <div class="voting-title">Оцените работу</div>
+            <div class="voting-criteria">
+                <div class="criteria-item">
+                    <div class="criteria-label">
+                        <span>Креативность</span>
+                        <span class="selected-value" data-criteria="creativity">—</span>
+                    </div>
+                    <div class="stars" data-participant="${participant.id}" data-criteria="creativity">
+                        ${generateStars()}
+                    </div>
+                </div>
+                <div class="criteria-item">
+                    <div class="criteria-label">
+                        <span>Применимость</span>
+                        <span class="selected-value" data-criteria="applicability">—</span>
+                    </div>
+                    <div class="stars" data-participant="${participant.id}" data-criteria="applicability">
+                        ${generateStars()}
+                    </div>
+                </div>
+            </div>
+            <button class="submit-vote" data-participant="${participant.id}">Отправить оценку</button>
+            <div class="vote-success" style="display:none;">✓ Ваша оценка учтена!</div>
+        </div>
+        
+        <div class="comments-section">
+            <div class="comments-title">Комментарии (${getCommentsCount(participant.id)})</div>
+            
+            <div class="comment-form">
+                <div class="comment-input-group">
+                    <input type="text" class="comment-input comment-name" placeholder="Ваше имя" maxlength="50" />
+                    <textarea class="comment-textarea comment-text" placeholder="Ваш комментарий..." maxlength="500"></textarea>
+                </div>
+                <button class="submit-comment" data-participant="${participant.id}">Оставить комментарий</button>
+            </div>
+            
+            <div class="comments-list" id="comments-${participant.id}">
+                ${renderComments(participant.id)}
+            </div>
+        </div>
+    `;
+    
+    // Добавляем обработчики голосования и комментариев
+    setupVoting(card, participant.id);
+    setupCommentForm(card, participant.id);
+    
+    return card;
+}
+
+// Рендер медиа
+function renderMedia(media) {
+    if (media.type === 'image') {
+        return `<img src="${media.url}" alt="Media" />`;
+    } else if (media.type === 'video') {
+        // Можно использовать YouTube embed или video tag
+        if (media.url.includes('youtube.com') || media.url.includes('youtu.be')) {
+            const videoId = extractYouTubeId(media.url);
+            return `<iframe src="https://www.youtube.com/embed/${videoId}" frameborder="0" allowfullscreen></iframe>`;
+        }
+        return `<img src="${media.url}" alt="Video placeholder" />`;
+    }
+    return 'Медиа загружается...';
+}
+
+// Генерация звёзд
+function generateStars() {
+    let html = '';
+    for (let i = 1; i <= 10; i++) {
+        html += `<span class="star" data-value="${i}">★</span>`;
+    }
+    return html;
+}
+
+// Настройка голосования
+function setupVoting(card, participantId) {
+    const starsContainers = card.querySelectorAll('.stars');
+    const submitBtn = card.querySelector('.submit-vote');
+    const successMsg = card.querySelector('.vote-success');
+    
+    let selectedVotes = {
+        creativity: 0,
+        applicability: 0
+    };
+    
+    // Обработка кликов по звёздам
+    starsContainers.forEach(container => {
+        const stars = container.querySelectorAll('.star');
+        const criteria = container.dataset.criteria;
+        const selectedValueSpan = card.querySelector(`.selected-value[data-criteria="${criteria}"]`);
+        
+        stars.forEach(star => {
+            star.addEventListener('click', () => {
+                const value = parseInt(star.dataset.value);
+                selectedVotes[criteria] = value;
+                
+                // Обновляем визуально
+                stars.forEach((s, index) => {
+                    if (index < value) {
+                        s.classList.add('active');
+                    } else {
+                        s.classList.remove('active');
+                    }
+                });
+                
+                selectedValueSpan.textContent = value;
+                
+                // Активируем кнопку если обе оценки выставлены
+                if (selectedVotes.creativity > 0 && selectedVotes.applicability > 0) {
+                    submitBtn.disabled = false;
+                }
+            });
+        });
+    });
+    
+    // Отправка голоса
+    submitBtn.addEventListener('click', () => {
+        if (selectedVotes.creativity > 0 && selectedVotes.applicability > 0) {
+            submitVote(participantId, selectedVotes);
+            submitBtn.style.display = 'none';
+            successMsg.style.display = 'block';
+            
+            // Обновляем средние оценки
+            updateScores(participantId);
+        }
+    });
+}
+
+// Отправка голоса
+function submitVote(participantId, voteData) {
+    if (!votes[participantId]) {
+        votes[participantId] = [];
+    }
+    votes[participantId].push({
+        creativity: voteData.creativity,
+        applicability: voteData.applicability,
+        timestamp: Date.now()
+    });
+    
+    // Здесь можно отправить на сервер
+    console.log('Vote submitted:', participantId, voteData);
+    
+    // Сохраняем в localStorage
+    localStorage.setItem('ai_battles_votes', JSON.stringify(votes));
+}
+
+// Подсчёт средних оценок
+function calculateAverageScores(participantId) {
+    const participantVotes = votes[participantId] || [];
+    
+    if (participantVotes.length === 0) {
+        return { creativity: '—', applicability: '—' };
+    }
+    
+    const avgCreativity = participantVotes.reduce((sum, v) => sum + v.creativity, 0) / participantVotes.length;
+    const avgApplicability = participantVotes.reduce((sum, v) => sum + v.applicability, 0) / participantVotes.length;
+    
+    return {
+        creativity: avgCreativity.toFixed(1),
+        applicability: avgApplicability.toFixed(1)
+    };
+}
+
+// Обновление оценок на странице
+function updateScores(participantId) {
+    const scores = calculateAverageScores(participantId);
+    const card = document.querySelector(`[data-participant="${participantId}"]`).closest('.participant-card');
+    const scoreValues = card.querySelectorAll('.score-value');
+    scoreValues[0].textContent = scores.creativity;
+    scoreValues[1].textContent = scores.applicability;
+}
+
+// Извлечение YouTube ID
+function extractYouTubeId(url) {
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+    const match = url.match(regExp);
+    return (match && match[2].length === 11) ? match[2] : null;
+}
+
+// ========================================
+// СИСТЕМА КОММЕНТАРИЕВ
+// ========================================
+
+const comments = {}; // Хранение комментариев: {participantId: [{name, text, timestamp}, ...]}
+
+// Загрузка сохранённых комментариев
+const savedComments = localStorage.getItem('ai_battles_comments');
+if (savedComments) {
+    Object.assign(comments, JSON.parse(savedComments));
+}
+
+// Получить количество комментариев
+function getCommentsCount(participantId) {
+    return (comments[participantId] || []).length;
+}
+
+// Рендер комментариев
+function renderComments(participantId) {
+    const participantComments = comments[participantId] || [];
+    
+    if (participantComments.length === 0) {
+        return '<div class="no-comments">Пока нет комментариев. Будьте первым!</div>';
+    }
+    
+    return participantComments
+        .sort((a, b) => b.timestamp - a.timestamp) // Новые сверху
+        .map(comment => `
+            <div class="comment-item">
+                <div class="comment-header">
+                    <div class="comment-author">${escapeHtml(comment.name)}</div>
+                    <div class="comment-date">${formatDate(comment.timestamp)}</div>
+                </div>
+                <div class="comment-text">${escapeHtml(comment.text)}</div>
+            </div>
+        `).join('');
+}
+
+// Добавить комментарий
+function addComment(participantId, name, text) {
+    if (!comments[participantId]) {
+        comments[participantId] = [];
+    }
+    
+    comments[participantId].push({
+        name: name.trim(),
+        text: text.trim(),
+        timestamp: Date.now()
+    });
+    
+    // Сохраняем в localStorage
+    localStorage.setItem('ai_battles_comments', JSON.stringify(comments));
+    
+    console.log('Comment added:', participantId, name);
+}
+
+// Обновить список комментариев на странице
+function updateCommentsList(participantId) {
+    const commentsList = document.getElementById(`comments-${participantId}`);
+    if (commentsList) {
+        commentsList.innerHTML = renderComments(participantId);
+    }
+    
+    // Обновляем счётчик
+    const card = document.querySelector(`[data-participant="${participantId}"]`).closest('.participant-card');
+    const commentsTitle = card.querySelector('.comments-title');
+    if (commentsTitle) {
+        commentsTitle.textContent = `Комментарии (${getCommentsCount(participantId)})`;
+    }
+}
+
+// Экранирование HTML
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Форматирование даты
+function formatDate(timestamp) {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diff = now - date;
+    
+    // Меньше минуты
+    if (diff < 60000) {
+        return 'только что';
+    }
+    
+    // Меньше часа
+    if (diff < 3600000) {
+        const minutes = Math.floor(diff / 60000);
+        return `${minutes} мин назад`;
+    }
+    
+    // Меньше дня
+    if (diff < 86400000) {
+        const hours = Math.floor(diff / 3600000);
+        return `${hours} ч назад`;
+    }
+    
+    // Полная дата
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    
+    return `${day}.${month}.${year} ${hours}:${minutes}`;
+}
+
+// Настройка формы комментариев
+function setupCommentForm(card, participantId) {
+    const submitBtn = card.querySelector('.submit-comment');
+    const nameInput = card.querySelector('.comment-name');
+    const textArea = card.querySelector('.comment-text');
+    
+    submitBtn.addEventListener('click', () => {
+        const name = nameInput.value.trim();
+        const text = textArea.value.trim();
+        
+        // Валидация
+        if (!name) {
+            alert('Пожалуйста, укажите ваше имя');
+            nameInput.focus();
+            return;
+        }
+        
+        if (!text) {
+            alert('Пожалуйста, напишите комментарий');
+            textArea.focus();
+            return;
+        }
+        
+        if (text.length < 3) {
+            alert('Комментарий слишком короткий (минимум 3 символа)');
+            textArea.focus();
+            return;
+        }
+        
+        // Добавляем комментарий
+        addComment(participantId, name, text);
+        
+        // Обновляем список
+        updateCommentsList(participantId);
+        
+        // Очищаем форму
+        textArea.value = '';
+        
+        // Показываем сообщение
+        const originalText = submitBtn.textContent;
+        submitBtn.textContent = '✓ Комментарий добавлен!';
+        submitBtn.disabled = true;
+        
+        setTimeout(() => {
+            submitBtn.textContent = originalText;
+            submitBtn.disabled = false;
+        }, 2000);
+    });
+}
+
+// Загрузка сохранённых голосов
+const savedVotes = localStorage.getItem('ai_battles_votes');
+if (savedVotes) {
+    Object.assign(votes, JSON.parse(savedVotes));
+}
+
+</script>
+
+</body>
+</html>
