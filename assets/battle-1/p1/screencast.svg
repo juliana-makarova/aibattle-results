@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+  <defs>
+    <linearGradient id="g2" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#6600ff"/>
+      <stop offset="1" stop-color="#00ff88"/>
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="900" fill="#0a0a0a"/>
+  <rect x="60" y="60" width="1480" height="780" rx="28" fill="url(#g2)" opacity="0.18"/>
+  <rect x="90" y="90" width="1420" height="720" rx="22" fill="#111" stroke="#333" stroke-width="2"/>
+  <text x="50%" y="46%" fill="#fff" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Arial" font-size="64" font-weight="700" text-anchor="middle">
+    Батл #1 — Участник 1
+  </text>
+  <text x="50%" y="56%" fill="#00ff88" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Arial" font-size="44" font-weight="700" text-anchor="middle">
+    Скринкаст (screencast.svg)
+  </text>
+  <text x="50%" y="66%" fill="#aaa" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Arial" font-size="28" text-anchor="middle">
+    Можно заменить на PNG/JPG или mp4 (тогда сменим type на "video")
+  </text>
+</svg>
+
