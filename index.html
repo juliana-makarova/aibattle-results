@@ -558,7 +558,34 @@ const BATTLES_CONFIG = {
 // ========================================
 
 let currentBattle = 1;
-const votes = {}; // Хранение голосов: {participantId: {creativity: 8, applicability: 9}}
+// Важно: без регистрации и сервера мы можем ограничить "1 голос" только в рамках одного браузера (localStorage).
+// Формат: { [participantId]: { value: 1..5, timestamp } }
+const VOTES_KEY = 'ai_battles_votes_v2';
+const votes = loadVotes();
+
+function loadVotes() {
+    try {
+        const raw = localStorage.getItem(VOTES_KEY);
+        const parsed = raw ? JSON.parse(raw) : {};
+        return (parsed && typeof parsed === 'object') ? parsed : {};
+    } catch (e) {
+        console.warn('Failed to load votes from localStorage:', e);
+        return {};
+    }
+}
+
+function saveVotes() {
+    localStorage.setItem(VOTES_KEY, JSON.stringify(votes));
+}
+
+function getUserVoteValue(participantId) {
+    const v = votes[participantId];
+    return v && typeof v.value === 'number' ? v.value : null;
+}
+
+function hasUserVoted(participantId) {
+    return getUserVoteValue(participantId) !== null;
+}
 
 // Инициализация
 document.addEventListener('DOMContentLoaded', () => {
@@ -605,20 +632,16 @@ function createParticipantCard(participant) {
     const card = document.createElement('div');
     card.className = 'participant-card';
     
-    // Получаем средние оценки
-    const scores = calculateAverageScores(participant.id);
+    // Ваша оценка (если уже голосовали в этом браузере)
+    const myVote = getUserVoteValue(participant.id);
     
     card.innerHTML = `
         <div class="participant-header">
             <div class="participant-name">${participant.name}</div>
             <div class="participant-scores">
                 <div class="score-item">
-                    <div class="score-label">Креативность</div>
-                    <div class="score-value">${scores.creativity}</div>
-                </div>
-                <div class="score-item">
-                    <div class="score-label">Применимость</div>
-                    <div class="score-value">${scores.applicability}</div>
+                    <div class="score-label">Ваша оценка</div>
+                    <div class="score-value" data-score-participant="${participant.id}">${myVote ? `${myVote}/5` : '—'}</div>
                 </div>
             </div>
         </div>
@@ -646,28 +669,18 @@ function createParticipantCard(participant) {
         
         <div class="voting-section">
             <div class="voting-title">Оцените работу</div>
-            <div class="voting-criteria">
-                <div class="criteria-item">
-                    <div class="criteria-label">
-                        <span>Креативность</span>
-                        <span class="selected-value" data-criteria="creativity">—</span>
-                    </div>
-                    <div class="stars" data-participant="${participant.id}" data-criteria="creativity">
-                        ${generateStars()}
-                    </div>
+            <div class="criteria-item">
+                <div class="criteria-label">
+                    <span>Оценка (1–5)</span>
+                    <span class="selected-value">—</span>
                 </div>
-                <div class="criteria-item">
-                    <div class="criteria-label">
-                        <span>Применимость</span>
-                        <span class="selected-value" data-criteria="applicability">—</span>
-                    </div>
-                    <div class="stars" data-participant="${participant.id}" data-criteria="applicability">
-                        ${generateStars()}
-                    </div>
+                <div class="stars" data-participant="${participant.id}">
+                    ${generateStars(5)}
                 </div>
             </div>
-            <button class="submit-vote" data-participant="${participant.id}">Отправить оценку</button>
-            <div class="vote-success" style="display:none;">✓ Ваша оценка учтена!</div>
+            <button class="submit-vote" data-participant="${participant.id}" disabled>Отправить оценку</button>
+            <div class="vote-success" style="display:none;">✓ Спасибо! Ваша оценка учтена.</div>
+            <div class="vote-already" style="display:none; text-align:center; color:#888; margin-top:12px;">Вы уже голосовали за этого участника.</div>
         </div>
         
         <div class="comments-section">
@@ -720,9 +733,9 @@ function renderMedia(media) {
 }
 
 // Генерация звёзд
-function generateStars() {
+function generateStars(max = 5) {
     let html = '';
-    for (let i = 1; i <= 10; i++) {
+    for (let i = 1; i <= max; i++) {
         html += `<span class="star" data-value="${i}">★</span>`;
     }
     return html;
@@ -730,100 +743,86 @@ function generateStars() {
 
 // Настройка голосования
 function setupVoting(card, participantId) {
-    const starsContainers = card.querySelectorAll('.stars');
+    const starsContainer = card.querySelector('.stars');
     const submitBtn = card.querySelector('.submit-vote');
     const successMsg = card.querySelector('.vote-success');
+    const alreadyMsg = card.querySelector('.vote-already');
+    const selectedValueSpan = card.querySelector('.selected-value');
     
-    let selectedVotes = {
-        creativity: 0,
-        applicability: 0
-    };
+    const stars = starsContainer ? starsContainer.querySelectorAll('.star') : [];
+    let selectedValue = 0;
     
-    // Обработка кликов по звёздам
-    starsContainers.forEach(container => {
-        const stars = container.querySelectorAll('.star');
-        const criteria = container.dataset.criteria;
-        const selectedValueSpan = card.querySelector(`.selected-value[data-criteria="${criteria}"]`);
-        
-        stars.forEach(star => {
-            star.addEventListener('click', () => {
-                const value = parseInt(star.dataset.value);
-                selectedVotes[criteria] = value;
-                
-                // Обновляем визуально
-                stars.forEach((s, index) => {
-                    if (index < value) {
-                        s.classList.add('active');
-                    } else {
-                        s.classList.remove('active');
-                    }
-                });
-                
-                selectedValueSpan.textContent = value;
-                
-                // Активируем кнопку если обе оценки выставлены
-                if (selectedVotes.creativity > 0 && selectedVotes.applicability > 0) {
-                    submitBtn.disabled = false;
-                }
-            });
+    function setStarsUI(value) {
+        stars.forEach((s, index) => {
+            if (index < value) s.classList.add('active');
+            else s.classList.remove('active');
+        });
+    }
+
+    function disableStars() {
+        stars.forEach(s => {
+            s.style.pointerEvents = 'none';
+            s.style.opacity = '0.7';
+        });
+    }
+
+    // Если уже голосовали — показываем и блокируем
+    const existing = getUserVoteValue(participantId);
+    if (existing) {
+        setStarsUI(existing);
+        if (selectedValueSpan) selectedValueSpan.textContent = existing;
+        if (submitBtn) submitBtn.style.display = 'none';
+        if (alreadyMsg) alreadyMsg.style.display = 'block';
+        disableStars();
+        return;
+    }
+
+    // Обработка кликов по звёздам (1..5)
+    stars.forEach(star => {
+        star.addEventListener('click', () => {
+            const value = parseInt(star.dataset.value, 10);
+            if (!value) return;
+            selectedValue = value;
+            setStarsUI(value);
+            if (selectedValueSpan) selectedValueSpan.textContent = value;
+            if (submitBtn) submitBtn.disabled = false;
         });
     });
     
     // Отправка голоса
     submitBtn.addEventListener('click', () => {
-        if (selectedVotes.creativity > 0 && selectedVotes.applicability > 0) {
-            submitVote(participantId, selectedVotes);
+        if (selectedValue >= 1 && selectedValue <= 5) {
+            const ok = submitVote(participantId, selectedValue);
+            if (!ok) {
+                // На случай гонок/повторного клика
+                if (alreadyMsg) alreadyMsg.style.display = 'block';
+                disableStars();
+                submitBtn.style.display = 'none';
+                return;
+            }
             submitBtn.style.display = 'none';
             successMsg.style.display = 'block';
             
-            // Обновляем средние оценки
-            updateScores(participantId);
+            // Обновляем "ваша оценка" в шапке карточки
+            updateUserScore(participantId);
+            disableStars();
         }
     });
 }
 
 // Отправка голоса
-function submitVote(participantId, voteData) {
-    if (!votes[participantId]) {
-        votes[participantId] = [];
-    }
-    votes[participantId].push({
-        creativity: voteData.creativity,
-        applicability: voteData.applicability,
-        timestamp: Date.now()
-    });
-    
-    // Здесь можно отправить на сервер
-    console.log('Vote submitted:', participantId, voteData);
-    
-    // Сохраняем в localStorage
-    localStorage.setItem('ai_battles_votes', JSON.stringify(votes));
+function submitVote(participantId, value) {
+    if (hasUserVoted(participantId)) return false;
+    votes[participantId] = { value, timestamp: Date.now() };
+    saveVotes();
+    console.log('Vote submitted:', participantId, value);
+    return true;
 }
 
-// Подсчёт средних оценок
-function calculateAverageScores(participantId) {
-    const participantVotes = votes[participantId] || [];
-    
-    if (participantVotes.length === 0) {
-        return { creativity: '—', applicability: '—' };
-    }
-    
-    const avgCreativity = participantVotes.reduce((sum, v) => sum + v.creativity, 0) / participantVotes.length;
-    const avgApplicability = participantVotes.reduce((sum, v) => sum + v.applicability, 0) / participantVotes.length;
-    
-    return {
-        creativity: avgCreativity.toFixed(1),
-        applicability: avgApplicability.toFixed(1)
-    };
-}
-
-// Обновление оценок на странице
-function updateScores(participantId) {
-    const scores = calculateAverageScores(participantId);
-    const card = document.querySelector(`[data-participant="${participantId}"]`).closest('.participant-card');
-    const scoreValues = card.querySelectorAll('.score-value');
-    scoreValues[0].textContent = scores.creativity;
-    scoreValues[1].textContent = scores.applicability;
+function updateUserScore(participantId) {
+    const value = getUserVoteValue(participantId);
+    const el = document.querySelector(`.score-value[data-score-participant="${participantId}"]`);
+    if (el) el.textContent = value ? `${value}/5` : '—';
 }
 
 // Извлечение YouTube ID
@@ -994,11 +993,7 @@ function setupCommentForm(card, participantId) {
     });
 }
 
-// Загрузка сохранённых голосов
-const savedVotes = localStorage.getItem('ai_battles_votes');
-if (savedVotes) {
-    Object.assign(votes, JSON.parse(savedVotes));
-}
+// Старый ключ ai_battles_votes больше не используем (там была другая схема с 2 критериями и 10 звёздами).
 
 </script>
 
