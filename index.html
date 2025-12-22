@@ -35,6 +35,7 @@
             font-size: 48px;
             margin-bottom: 10px;
             background: linear-gradient(135deg, #ff0066, #6600ff);
+            background-clip: text;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
@@ -494,15 +495,15 @@ const BATTLES_CONFIG = {
                 name: "Анна Иванова",
                 result: {
                     type: "image",
-                    url: "assets/battle-1/p1/result.svg"
+                    url: "assets/battle-1/p1/result.png"
                 },
                 screencast: {
                     type: "image",
-                    url: "assets/battle-1/p1/screencast.svg"
+                    url: "assets/battle-1/p1/screencast.png"
                 },
                 presentation: {
-                    type: "image",
-                    url: "assets/battle-1/p1/presentation.svg"
+                    type: "video",
+                    url: "assets/battle-1/p1/presentation.mp4"
                 }
             },
             {
@@ -703,6 +704,16 @@ function renderMedia(media) {
             const videoId = extractYouTubeId(media.url);
             return `<iframe src="https://www.youtube.com/embed/${videoId}" frameborder="0" allowfullscreen></iframe>`;
         }
+        // Локальные/прямые mp4/webm/ogg
+        if (/\.(mp4|webm|ogg)(\?.*)?$/i.test(media.url)) {
+            return `
+                <video controls playsinline preload="metadata">
+                    <source src="${media.url}" />
+                    Ваш браузер не поддерживает видео.
+                </video>
+            `;
+        }
+        // Фоллбек (если передали ссылку на картинку как "video" или другое)
         return `<img src="${media.url}" alt="Video placeholder" />`;
     }
     return 'Медиа загружается...';
