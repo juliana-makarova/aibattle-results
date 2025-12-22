@@ -727,6 +727,9 @@ function createParticipantCard(participant) {
                     <input type="text" class="comment-input comment-name" placeholder="Ваше имя" maxlength="50" />
                     <textarea class="comment-textarea comment-text" placeholder="Ваш комментарий..." maxlength="500"></textarea>
                 </div>
+                <div class="comment-already" style="display:none; margin-bottom:12px; color:#888; font-size:13px; text-align:center;">
+                    Вы уже оставили комментарий для этого участника.
+                </div>
                 <button class="submit-comment" data-participant="${participant.id}">Оставить комментарий</button>
             </div>
             
@@ -890,56 +893,93 @@ function extractYouTubeId(url) {
 // СИСТЕМА КОММЕНТАРИЕВ
 // ========================================
 
-const comments = {}; // Хранение комментариев: {participantId: [{name, text, timestamp}, ...]}
+// Важно: без регистрации и сервера комментарии сохраняются ТОЛЬКО в браузере пользователя (localStorage).
+// Формат: { [participantId]: { name, text, timestamp } } — один комментарий на участника.
+const COMMENTS_KEY = 'ai_battles_comments_v2';
+const LEGACY_COMMENTS_KEY = 'ai_battles_comments';
+const comments = loadComments();
 
-// Загрузка сохранённых комментариев
-const savedComments = localStorage.getItem('ai_battles_comments');
-if (savedComments) {
-    Object.assign(comments, JSON.parse(savedComments));
+function loadComments() {
+    try {
+        const raw = localStorage.getItem(COMMENTS_KEY);
+        const parsed = raw ? JSON.parse(raw) : null;
+        if (parsed && typeof parsed === 'object') return parsed;
+
+        // Миграция со старого ключа (там был массив комментариев на участника)
+        const legacyRaw = localStorage.getItem(LEGACY_COMMENTS_KEY);
+        const legacyParsed = legacyRaw ? JSON.parse(legacyRaw) : null;
+        if (legacyParsed && typeof legacyParsed === 'object') {
+            const migrated = {};
+            for (const [pid, arr] of Object.entries(legacyParsed)) {
+                if (Array.isArray(arr) && arr.length > 0) {
+                    const last = arr.slice().sort((a, b) => (b?.timestamp || 0) - (a?.timestamp || 0))[0];
+                    if (last && typeof last.name === 'string' && typeof last.text === 'string') {
+                        migrated[pid] = { name: last.name, text: last.text, timestamp: last.timestamp || Date.now() };
+                    }
+                }
+            }
+            localStorage.setItem(COMMENTS_KEY, JSON.stringify(migrated));
+            return migrated;
+        }
+
+        return {};
+    } catch (e) {
+        console.warn('Failed to load comments from localStorage:', e);
+        return {};
+    }
+}
+
+function saveComments() {
+    localStorage.setItem(COMMENTS_KEY, JSON.stringify(comments));
+}
+
+function getUserComment(participantId) {
+    const c = comments[participantId];
+    if (!c || typeof c !== 'object') return null;
+    if (typeof c.name !== 'string' || typeof c.text !== 'string') return null;
+    return { name: c.name, text: c.text, timestamp: c.timestamp || Date.now() };
+}
+
+function hasUserComment(participantId) {
+    return getUserComment(participantId) !== null;
 }
 
 // Получить количество комментариев
 function getCommentsCount(participantId) {
-    return (comments[participantId] || []).length;
+    return hasUserComment(participantId) ? 1 : 0;
 }
 
 // Рендер комментариев
 function renderComments(participantId) {
-    const participantComments = comments[participantId] || [];
-    
-    if (participantComments.length === 0) {
+    const c = getUserComment(participantId);
+    if (!c) {
         return '<div class="no-comments">Пока нет комментариев. Будьте первым!</div>';
     }
-    
-    return participantComments
-        .sort((a, b) => b.timestamp - a.timestamp) // Новые сверху
-        .map(comment => `
-            <div class="comment-item">
-                <div class="comment-header">
-                    <div class="comment-author">${escapeHtml(comment.name)}</div>
-                    <div class="comment-date">${formatDate(comment.timestamp)}</div>
-                </div>
-                <div class="comment-text">${escapeHtml(comment.text)}</div>
+
+    return `
+        <div class="comment-item">
+            <div class="comment-header">
+                <div class="comment-author">${escapeHtml(c.name)}</div>
+                <div class="comment-date">${formatDate(c.timestamp)}</div>
             </div>
-        `).join('');
+            <div class="comment-text">${escapeHtml(c.text)}</div>
+        </div>
+    `;
 }
 
 // Добавить комментарий
 function addComment(participantId, name, text) {
-    if (!comments[participantId]) {
-        comments[participantId] = [];
-    }
-    
-    comments[participantId].push({
+    if (hasUserComment(participantId)) return false;
+
+    comments[participantId] = {
         name: name.trim(),
         text: text.trim(),
         timestamp: Date.now()
-    });
-    
-    // Сохраняем в localStorage
-    localStorage.setItem('ai_battles_comments', JSON.stringify(comments));
-    
+    };
+
+    saveComments();
     console.log('Comment added:', participantId, name);
+    return true;
 }
 
 // Обновить список комментариев на странице
@@ -1002,6 +1042,19 @@ function setupCommentForm(card, participantId) {
     const submitBtn = card.querySelector('.submit-comment');
     const nameInput = card.querySelector('.comment-name');
     const textArea = card.querySelector('.comment-text');
+    const alreadyMsg = card.querySelector('.comment-already');
+
+    // Если уже комментировали — блокируем форму
+    const existing = getUserComment(participantId);
+    if (existing) {
+        if (nameInput) nameInput.value = existing.name;
+        if (textArea) textArea.value = existing.text;
+        if (nameInput) nameInput.disabled = true;
+        if (textArea) textArea.disabled = true;
+        if (submitBtn) submitBtn.style.display = 'none';
+        if (alreadyMsg) alreadyMsg.style.display = 'block';
+        return;
+    }
     
     submitBtn.addEventListener('click', () => {
         const name = nameInput.value.trim();
@@ -1027,23 +1080,23 @@ function setupCommentForm(card, participantId) {
         }
         
         // Добавляем комментарий
-        addComment(participantId, name, text);
+        const ok = addComment(participantId, name, text);
+        if (!ok) {
+            if (alreadyMsg) alreadyMsg.style.display = 'block';
+            submitBtn.style.display = 'none';
+            nameInput.disabled = true;
+            textArea.disabled = true;
+            return;
+        }
         
         // Обновляем список
         updateCommentsList(participantId);
         
-        // Очищаем форму
-        textArea.value = '';
-        
-        // Показываем сообщение
-        const originalText = submitBtn.textContent;
-        submitBtn.textContent = '✓ Комментарий добавлен!';
-        submitBtn.disabled = true;
-        
-        setTimeout(() => {
-            submitBtn.textContent = originalText;
-            submitBtn.disabled = false;
-        }, 2000);
+        // Блокируем форму навсегда для этого участника (1 раз)
+        nameInput.disabled = true;
+        textArea.disabled = true;
+        submitBtn.style.display = 'none';
+        if (alreadyMsg) alreadyMsg.style.display = 'block';
     });
 }
 
