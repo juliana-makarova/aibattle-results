@@ -559,15 +559,32 @@ const BATTLES_CONFIG = {
 
 let currentBattle = 1;
 // Важно: без регистрации и сервера мы можем ограничить "1 голос" только в рамках одного браузера (localStorage).
-// Формат: { [participantId]: { value: 1..5, timestamp } }
-const VOTES_KEY = 'ai_battles_votes_v2';
+// Формат: { [participantId]: { creativity: 1..5, applicability: 1..5, timestamp } }
+const VOTES_KEY = 'ai_battles_votes_v3';
+const LEGACY_VOTES_KEY_V2 = 'ai_battles_votes_v2';
 const votes = loadVotes();
 
 function loadVotes() {
     try {
         const raw = localStorage.getItem(VOTES_KEY);
-        const parsed = raw ? JSON.parse(raw) : {};
-        return (parsed && typeof parsed === 'object') ? parsed : {};
+        const parsed = raw ? JSON.parse(raw) : null;
+        if (parsed && typeof parsed === 'object') return parsed;
+
+        // Миграция со старой схемы v2 (1 число) — кладём в оба критерия одинаковое значение.
+        const legacyRaw = localStorage.getItem(LEGACY_VOTES_KEY_V2);
+        const legacyParsed = legacyRaw ? JSON.parse(legacyRaw) : null;
+        if (legacyParsed && typeof legacyParsed === 'object') {
+            const migrated = {};
+            for (const [pid, v] of Object.entries(legacyParsed)) {
+                if (v && typeof v.value === 'number') {
+                    migrated[pid] = { creativity: v.value, applicability: v.value, timestamp: v.timestamp || Date.now() };
+                }
+            }
+            localStorage.setItem(VOTES_KEY, JSON.stringify(migrated));
+            return migrated;
+        }
+
+        return {};
     } catch (e) {
         console.warn('Failed to load votes from localStorage:', e);
         return {};
@@ -578,13 +595,17 @@ function saveVotes() {
     localStorage.setItem(VOTES_KEY, JSON.stringify(votes));
 }
 
-function getUserVoteValue(participantId) {
+function getUserVote(participantId) {
     const v = votes[participantId];
-    return v && typeof v.value === 'number' ? v.value : null;
+    if (!v || typeof v !== 'object') return null;
+    const creativity = typeof v.creativity === 'number' ? v.creativity : null;
+    const applicability = typeof v.applicability === 'number' ? v.applicability : null;
+    if (!creativity || !applicability) return null;
+    return { creativity, applicability };
 }
 
 function hasUserVoted(participantId) {
-    return getUserVoteValue(participantId) !== null;
+    return getUserVote(participantId) !== null;
 }
 
 // Инициализация
@@ -633,15 +654,19 @@ function createParticipantCard(participant) {
     card.className = 'participant-card';
     
     // Ваша оценка (если уже голосовали в этом браузере)
-    const myVote = getUserVoteValue(participant.id);
+    const myVote = getUserVote(participant.id);
     
     card.innerHTML = `
         <div class="participant-header">
             <div class="participant-name">${participant.name}</div>
             <div class="participant-scores">
                 <div class="score-item">
-                    <div class="score-label">Ваша оценка</div>
-                    <div class="score-value" data-score-participant="${participant.id}">${myVote ? `${myVote}/5` : '—'}</div>
+                    <div class="score-label">Креативность</div>
+                    <div class="score-value" data-score-participant="${participant.id}" data-score-criteria="creativity">${myVote ? `${myVote.creativity}/5` : '—'}</div>
+                </div>
+                <div class="score-item">
+                    <div class="score-label">Применимость</div>
+                    <div class="score-value" data-score-participant="${participant.id}" data-score-criteria="applicability">${myVote ? `${myVote.applicability}/5` : '—'}</div>
                 </div>
             </div>
         </div>
@@ -669,13 +694,24 @@ function createParticipantCard(participant) {
         
         <div class="voting-section">
             <div class="voting-title">Оцените работу</div>
-            <div class="criteria-item">
-                <div class="criteria-label">
-                    <span>Оценка (1–5)</span>
-                    <span class="selected-value">—</span>
+            <div class="voting-criteria">
+                <div class="criteria-item">
+                    <div class="criteria-label">
+                        <span>Креативность</span>
+                        <span class="selected-value" data-criteria="creativity">—</span>
+                    </div>
+                    <div class="stars" data-participant="${participant.id}" data-criteria="creativity">
+                        ${generateStars(5)}
+                    </div>
                 </div>
-                <div class="stars" data-participant="${participant.id}">
-                    ${generateStars(5)}
+                <div class="criteria-item">
+                    <div class="criteria-label">
+                        <span>Применимость</span>
+                        <span class="selected-value" data-criteria="applicability">—</span>
+                    </div>
+                    <div class="stars" data-participant="${participant.id}" data-criteria="applicability">
+                        ${generateStars(5)}
+                    </div>
                 </div>
             </div>
             <button class="submit-vote" data-participant="${participant.id}" disabled>Отправить оценку</button>
@@ -743,23 +779,21 @@ function generateStars(max = 5) {
 
 // Настройка голосования
 function setupVoting(card, participantId) {
-    const starsContainer = card.querySelector('.stars');
+    const starsContainers = card.querySelectorAll('.stars[data-criteria]');
     const submitBtn = card.querySelector('.submit-vote');
     const successMsg = card.querySelector('.vote-success');
     const alreadyMsg = card.querySelector('.vote-already');
-    const selectedValueSpan = card.querySelector('.selected-value');
     
-    const stars = starsContainer ? starsContainer.querySelectorAll('.star') : [];
-    let selectedValue = 0;
+    let selectedVotes = { creativity: 0, applicability: 0 };
     
-    function setStarsUI(value) {
+    function setStarsUI(stars, value) {
         stars.forEach((s, index) => {
             if (index < value) s.classList.add('active');
             else s.classList.remove('active');
         });
     }
 
-    function disableStars() {
+    function disableStars(stars) {
         stars.forEach(s => {
             s.style.pointerEvents = 'none';
             s.style.opacity = '0.7';
@@ -767,36 +801,50 @@ function setupVoting(card, participantId) {
     }
 
     // Если уже голосовали — показываем и блокируем
-    const existing = getUserVoteValue(participantId);
+    const existing = getUserVote(participantId);
     if (existing) {
-        setStarsUI(existing);
-        if (selectedValueSpan) selectedValueSpan.textContent = existing;
+        starsContainers.forEach(container => {
+            const criteria = container.dataset.criteria;
+            const stars = container.querySelectorAll('.star');
+            const value = criteria === 'creativity' ? existing.creativity : existing.applicability;
+            setStarsUI(stars, value);
+            const span = card.querySelector(`.selected-value[data-criteria="${criteria}"]`);
+            if (span) span.textContent = value;
+            disableStars(stars);
+        });
         if (submitBtn) submitBtn.style.display = 'none';
         if (alreadyMsg) alreadyMsg.style.display = 'block';
-        disableStars();
         return;
     }
 
-    // Обработка кликов по звёздам (1..5)
-    stars.forEach(star => {
-        star.addEventListener('click', () => {
-            const value = parseInt(star.dataset.value, 10);
-            if (!value) return;
-            selectedValue = value;
-            setStarsUI(value);
-            if (selectedValueSpan) selectedValueSpan.textContent = value;
-            if (submitBtn) submitBtn.disabled = false;
+    // Обработка кликов по звёздам (1..5) для каждого критерия
+    starsContainers.forEach(container => {
+        const criteria = container.dataset.criteria;
+        const stars = container.querySelectorAll('.star');
+        const span = card.querySelector(`.selected-value[data-criteria="${criteria}"]`);
+
+        stars.forEach(star => {
+            star.addEventListener('click', () => {
+                const value = parseInt(star.dataset.value, 10);
+                if (!value) return;
+                selectedVotes[criteria] = value;
+                setStarsUI(stars, value);
+                if (span) span.textContent = value;
+                if (selectedVotes.creativity > 0 && selectedVotes.applicability > 0) {
+                    submitBtn.disabled = false;
+                }
+            });
         });
     });
     
     // Отправка голоса
     submitBtn.addEventListener('click', () => {
-        if (selectedValue >= 1 && selectedValue <= 5) {
-            const ok = submitVote(participantId, selectedValue);
+        if (selectedVotes.creativity > 0 && selectedVotes.applicability > 0) {
+            const ok = submitVote(participantId, selectedVotes);
             if (!ok) {
                 // На случай гонок/повторного клика
                 if (alreadyMsg) alreadyMsg.style.display = 'block';
-                disableStars();
+                starsContainers.forEach(container => disableStars(container.querySelectorAll('.star')));
                 submitBtn.style.display = 'none';
                 return;
             }
@@ -805,24 +853,30 @@ function setupVoting(card, participantId) {
             
             // Обновляем "ваша оценка" в шапке карточки
             updateUserScore(participantId);
-            disableStars();
+            starsContainers.forEach(container => disableStars(container.querySelectorAll('.star')));
         }
     });
 }
 
 // Отправка голоса
-function submitVote(participantId, value) {
+function submitVote(participantId, voteData) {
     if (hasUserVoted(participantId)) return false;
-    votes[participantId] = { value, timestamp: Date.now() };
+    votes[participantId] = {
+        creativity: voteData.creativity,
+        applicability: voteData.applicability,
+        timestamp: Date.now()
+    };
     saveVotes();
-    console.log('Vote submitted:', participantId, value);
+    console.log('Vote submitted:', participantId, voteData);
     return true;
 }
 
 function updateUserScore(participantId) {
-    const value = getUserVoteValue(participantId);
-    const el = document.querySelector(`.score-value[data-score-participant="${participantId}"]`);
-    if (el) el.textContent = value ? `${value}/5` : '—';
+    const vote = getUserVote(participantId);
+    const elC = document.querySelector(`.score-value[data-score-participant="${participantId}"][data-score-criteria="creativity"]`);
+    const elA = document.querySelector(`.score-value[data-score-participant="${participantId}"][data-score-criteria="applicability"]`);
+    if (elC) elC.textContent = vote ? `${vote.creativity}/5` : '—';
+    if (elA) elA.textContent = vote ? `${vote.applicability}/5` : '—';
 }
 
 // Извлечение YouTube ID
