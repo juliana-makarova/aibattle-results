@@ -128,6 +128,18 @@
             font-weight: bold;
         }
 
+        .participant-handle {
+            display: inline-block;
+            color: #888;
+            font-size: 14px;
+            text-decoration: none;
+        }
+
+        .participant-handle:hover {
+            color: #ff0066;
+            text-decoration: underline;
+        }
+
         .participant-scores {
             display: flex;
             gap: 20px;
@@ -204,6 +216,12 @@
             border: 2px solid #444;
             border-radius: 8px;
             padding: 25px;
+        }
+
+        /* Вложенная голосовалка под каждым медиа-окном (чуть компактнее) */
+        .voting-section--work {
+            margin-top: 14px;
+            padding: 16px;
         }
 
         .voting-title {
@@ -462,9 +480,9 @@
 
     <!-- TABS -->
     <div class="tabs">
-        <div class="tab active" data-battle="1">Батл #1: Брендинг</div>
-        <div class="tab" data-battle="2">Батл #2: Кейтеринг</div>
-        <div class="tab" data-battle="3">Батл #3: Доставка</div>
+        <div class="tab active" data-battle="1">Задание #1: Мерч</div>
+        <div class="tab" data-battle="2">Задание #2: Меню</div>
+        <div class="tab" data-battle="3">Задание #3: Локация</div>
     </div>
 
     <!-- TASK BRIEF -->
@@ -496,125 +514,108 @@
 
 const BATTLES_CONFIG = {
     1: {
-        title: "Батл #1: Брендинг",
-        task: "Разработать концепцию брендинга для нового ресторана премиум-класса в центре Сочи. Целевая аудитория: бизнес-туристы и состоятельные местные жители 30-50 лет. Нужно создать: логотип, фирменный стиль, концепцию интерьера.",
+        title: "Задание #1: Мерч",
+        task: "Описание задания #1 (поменяйте текст под реальное ТЗ).",
         participants: [
             {
-                id: "p1_b1",
-                name: "Анна Иванова",
-                result: {
-                    type: "image",
-                    url: "assets/battle-1/p1/result.png"
-                },
-                screencast: {
-                    type: "image",
-                    url: "assets/battle-1/p1/screencast.png"
-                },
-                presentation: {
-                    type: "video",
-                    url: "assets/battle-1/p1/presentation.mp4"
-                }
+                id: "sabdes",
+                name: "Сергей Большаков",
+                handle: "@sabdes",
+                telegramUrl: "https://t.me/sabdes",
+                works: []
             },
             {
-                id: "p2_b1",
-                name: "Дмитрий Петров",
-                result: {
-                    type: "image",
-                    url: "https://via.placeholder.com/800x450/ff0066/ffffff?text=Результат+2"
-                },
-                screencast: {
-                    type: "video",
-                    url: "https://via.placeholder.com/800x450/6600ff/ffffff?text=Скринкаст+2"
-                },
-                presentation: {
-                    type: "video",
-                    url: "https://via.placeholder.com/800x450/00ff88/000000?text=Презентация+2"
-                }
+                id: "Lyubashka_ph",
+                name: "Любовь Пунанцева",
+                handle: "@Lyubashka_ph",
+                telegramUrl: "https://t.me/Lyubashka_ph",
+                works: []
+            },
+            {
+                id: "kirillpolzikov",
+                name: "Кирилл Ползиков",
+                handle: "@kirillpolzikov",
+                telegramUrl: "https://t.me/kirillpolzikov",
+                works: []
+            },
+            {
+                id: "OlgaDorr",
+                name: "Ольга Дорошенко",
+                handle: "@OlgaDorr",
+                telegramUrl: "https://t.me/OlgaDorr",
+                works: []
+            },
+            {
+                id: "Eddsgn",
+                name: "Эдуард Зарипов",
+                handle: "@Eddsgn",
+                telegramUrl: "https://t.me/Eddsgn",
+                works: []
+            },
+            {
+                id: "Valit",
+                name: "Вялит Султанов",
+                handle: "@Valit",
+                telegramUrl: "https://t.me/Valit",
+                works: []
+            },
+            {
+                id: "nice2mitya",
+                name: "Митя Амбарцумян",
+                handle: "@nice2mitya",
+                telegramUrl: "https://t.me/nice2mitya",
+                works: []
             }
         ]
     },
     2: {
-        title: "Батл #2: Кейтеринг",
-        task: "Разработать меню и стратегию продвижения кейтеринговых услуг для корпоративных мероприятий. Бюджет клиента: 500-1000 рублей на человека.",
+        title: "Задание #2: Меню",
+        task: "Описание задания #2 (поменяйте текст под реальное ТЗ).",
         participants: [
-            {
-                id: "p1_b2",
-                name: "Елена Смирнова",
-                result: {
-                    type: "image",
-                    url: "https://via.placeholder.com/800x450/ff0066/ffffff?text=Результат+Батл2"
-                },
-                screencast: {
-                    type: "video",
-                    url: "https://via.placeholder.com/800x450/6600ff/ffffff?text=Скринкаст+Батл2"
-                },
-                presentation: {
-                    type: "video",
-                    url: "https://via.placeholder.com/800x450/00ff88/000000?text=Презентация+Батл2"
-                }
-            }
+            // можно указывать другой набор участников, чем в задании #1
         ]
     },
     3: {
-        title: "Батл #3: Доставка",
-        task: "Оптимизировать процесс доставки еды для ресторана. Текущие проблемы: долгие сроки, холодная еда, высокая стоимость. Нужно предложить решение.",
-        participants: []
+        title: "Задание #3: Локация",
+        task: "Описание задания #3 (поменяйте текст под реальное ТЗ).",
+        participants: [
+            // можно указывать другой набор участников, чем в задании #1
+        ]
     }
 };
 
 // ========================================
-// ЛОГИКА ГОЛОСОВАНИЯ
+// ЛОГИКА ГОЛОСОВАНИЯ (на каждое медиа-окно)
 // ========================================
 
 let currentBattle = 1;
-// Важно: без регистрации и сервера мы можем ограничить "1 голос" только в рамках одного браузера (localStorage).
-// Формат: { [participantId]: { creativity: 1..10, applicability: 1..10, timestamp } }
-const VOTES_KEY = 'ai_battles_votes_v4';
-const LEGACY_VOTES_KEY_V2 = 'ai_battles_votes_v2';
-const LEGACY_VOTES_KEY_V3 = 'ai_battles_votes_v3';
-const votes = loadVotes();
+// Без регистрации и сервера ограничение "1 раз" работает только в рамках одного браузера (localStorage).
+// Формат: { [voteKey]: { creativity: 1..10, applicability: 1..10, timestamp } }
+const WORK_VOTES_KEY = 'ai_battles_work_votes_v1';
+const workVotes = loadWorkVotes();
 
-function loadVotes() {
+function loadWorkVotes() {
     try {
-        const raw = localStorage.getItem(VOTES_KEY);
+        const raw = localStorage.getItem(WORK_VOTES_KEY);
         const parsed = raw ? JSON.parse(raw) : null;
-        if (parsed && typeof parsed === 'object') return parsed;
-
-        // Миграция со схемы v3 (2 критерия, но 1..5) — просто копируем значения как есть.
-        const legacyV3Raw = localStorage.getItem(LEGACY_VOTES_KEY_V3);
-        const legacyV3Parsed = legacyV3Raw ? JSON.parse(legacyV3Raw) : null;
-        if (legacyV3Parsed && typeof legacyV3Parsed === 'object') {
-            localStorage.setItem(VOTES_KEY, JSON.stringify(legacyV3Parsed));
-            return legacyV3Parsed;
-        }
-
-        // Миграция со старой схемы v2 (1 число) — кладём в оба критерия одинаковое значение.
-        const legacyRaw = localStorage.getItem(LEGACY_VOTES_KEY_V2);
-        const legacyParsed = legacyRaw ? JSON.parse(legacyRaw) : null;
-        if (legacyParsed && typeof legacyParsed === 'object') {
-            const migrated = {};
-            for (const [pid, v] of Object.entries(legacyParsed)) {
-                if (v && typeof v.value === 'number') {
-                    migrated[pid] = { creativity: v.value, applicability: v.value, timestamp: v.timestamp || Date.now() };
-                }
-            }
-            localStorage.setItem(VOTES_KEY, JSON.stringify(migrated));
-            return migrated;
-        }
-
-        return {};
+        return (parsed && typeof parsed === 'object') ? parsed : {};
     } catch (e) {
-        console.warn('Failed to load votes from localStorage:', e);
+        console.warn('Failed to load work votes from localStorage:', e);
         return {};
     }
 }
 
-function saveVotes() {
-    localStorage.setItem(VOTES_KEY, JSON.stringify(votes));
+function saveWorkVotes() {
+    localStorage.setItem(WORK_VOTES_KEY, JSON.stringify(workVotes));
 }
 
-function getUserVote(participantId) {
-    const v = votes[participantId];
+function makeWorkVoteKey(battleId, participantId, workUrl) {
+    return `${battleId}::${participantId}::${workUrl}`;
+}
+
+function getWorkVote(battleId, participantId, workUrl) {
+    const key = makeWorkVoteKey(battleId, participantId, workUrl);
+    const v = workVotes[key];
     if (!v || typeof v !== 'object') return null;
     const creativity = typeof v.creativity === 'number' ? v.creativity : null;
     const applicability = typeof v.applicability === 'number' ? v.applicability : null;
@@ -622,8 +623,20 @@ function getUserVote(participantId) {
     return { creativity, applicability };
 }
 
-function hasUserVoted(participantId) {
-    return getUserVote(participantId) !== null;
+function hasWorkVoted(battleId, participantId, workUrl) {
+    return getWorkVote(battleId, participantId, workUrl) !== null;
+}
+
+function submitWorkVote(battleId, participantId, workUrl, voteData) {
+    if (hasWorkVoted(battleId, participantId, workUrl)) return false;
+    const key = makeWorkVoteKey(battleId, participantId, workUrl);
+    workVotes[key] = {
+        creativity: voteData.creativity,
+        applicability: voteData.applicability,
+        timestamp: Date.now()
+    };
+    saveWorkVotes();
+    return true;
 }
 
 // Инициализация
@@ -662,105 +675,67 @@ function renderBattle(battleId) {
     }
     
     battle.participants.forEach(participant => {
-        container.appendChild(createParticipantCard(participant));
+        container.appendChild(createParticipantCard(participant, battleId));
     });
 }
 
 // Создание карточки участника
-function createParticipantCard(participant) {
+function createParticipantCard(participant, battleId) {
     const card = document.createElement('div');
     card.className = 'participant-card';
-    
-    // Ваша оценка (если уже голосовали в этом браузере)
-    const myVote = getUserVote(participant.id);
-    
+
+    const safeName = escapeHtml(participant.name || 'Без имени');
+    const safeHandle = participant.handle ? escapeHtml(participant.handle) : '';
+    const safeTg = participant.telegramUrl ? escapeHtml(participant.telegramUrl) : '';
+
+    const works = Array.isArray(participant.works) ? participant.works : [];
+
+    const worksHtml = works.length
+        ? `
+            <div class="media-grid">
+                ${works.map((work, idx) => renderWorkItem(work, battleId, participant.id, idx)).join('')}
+            </div>
+        `
+        : `<div style="text-align:center; padding:30px; color:#666;">Работы скоро появятся</div>`;
+
     card.innerHTML = `
         <div class="participant-header">
-            <div class="participant-name">${participant.name}</div>
-            <div class="participant-scores">
-                <div class="score-item">
-                    <div class="score-label">Креативность</div>
-                    <div class="score-value" data-score-participant="${participant.id}" data-score-criteria="creativity">${myVote ? `${myVote.creativity}/10` : '—'}</div>
-                </div>
-                <div class="score-item">
-                    <div class="score-label">Применимость</div>
-                    <div class="score-value" data-score-participant="${participant.id}" data-score-criteria="applicability">${myVote ? `${myVote.applicability}/10` : '—'}</div>
-                </div>
+            <div style="display:flex; flex-direction:column; gap:6px;">
+                <div class="participant-name">${safeName}</div>
+                ${safeHandle && safeTg ? `<a class="participant-handle" href="${safeTg}" target="_blank" rel="noopener noreferrer">${safeHandle}</a>` : ''}
             </div>
         </div>
-        
-        <div class="media-grid">
-            <div class="media-item">
-                <div class="media-label">Результат</div>
-                <div class="media-content">
-                    ${renderMedia(participant.result)}
-                </div>
-            </div>
-            <div class="media-item">
-                <div class="media-label">Скринкаст процесса</div>
-                <div class="media-content">
-                    ${renderMedia(participant.screencast)}
-                </div>
-            </div>
-            <div class="media-item">
-                <div class="media-label">Видео-презентация</div>
-                <div class="media-content">
-                    ${renderMedia(participant.presentation)}
-                </div>
-            </div>
-        </div>
-        
-        <div class="voting-section">
-            <div class="voting-title">Оцените работу</div>
-            <div class="voting-criteria">
-                <div class="criteria-item">
-                    <div class="criteria-label">
-                        <span>Креативность (1–10)</span>
-                        <span class="selected-value" data-criteria="creativity">—</span>
-                    </div>
-                    <div class="stars" data-participant="${participant.id}" data-criteria="creativity">
-                        ${generateStars(10)}
-                    </div>
-                </div>
-                <div class="criteria-item">
-                    <div class="criteria-label">
-                        <span>Применимость (1–10)</span>
-                        <span class="selected-value" data-criteria="applicability">—</span>
-                    </div>
-                    <div class="stars" data-participant="${participant.id}" data-criteria="applicability">
-                        ${generateStars(10)}
-                    </div>
-                </div>
-            </div>
-            <button class="submit-vote" data-participant="${participant.id}" disabled>Отправить оценку</button>
-            <div class="vote-success" style="display:none;">✓ Спасибо! Ваша оценка учтена.</div>
-            <div class="vote-already" style="display:none; text-align:center; color:#888; margin-top:12px;">Вы уже голосовали за этого участника.</div>
-        </div>
-        
+
+        ${worksHtml}
+
         <div class="comments-section">
-            <div class="comments-title">Комментарии (${getCommentsCount(participant.id)})</div>
-            
+            <div class="comments-title">Комментарии (${getCommentsCount(battleId, participant.id)})</div>
+
             <div class="comment-form">
                 <div class="comment-input-group">
                     <input type="text" class="comment-input comment-name" placeholder="Ваше имя" maxlength="50" />
                     <textarea class="comment-textarea comment-text" placeholder="Ваш комментарий..." maxlength="500"></textarea>
                 </div>
                 <div class="comment-already" style="display:none; margin-bottom:12px; color:#888; font-size:13px; text-align:center;">
-                    Вы уже оставили комментарий для этого участника.
+                    Вы уже оставили комментарий для этого участника в этом задании.
                 </div>
-                <button class="submit-comment" data-participant="${participant.id}">Оставить комментарий</button>
+                <button class="submit-comment">Оставить комментарий</button>
             </div>
-            
-            <div class="comments-list" id="comments-${participant.id}">
-                ${renderComments(participant.id)}
+
+            <div class="comments-list" id="comments-${battleId}-${participant.id}">
+                ${renderComments(battleId, participant.id)}
             </div>
         </div>
     `;
-    
-    // Добавляем обработчики голосования и комментариев
-    setupVoting(card, participant.id);
-    setupCommentForm(card, participant.id);
-    setupMediaAspect(card); // подстраиваем только на мобилке
+
+    // Голосование под каждым медиа-окном
+    card.querySelectorAll('.media-item').forEach(item => setupWorkVoting(item));
+
+    // Комментарии: 1 на участника в рамках таба
+    setupCommentForm(card, battleId, participant.id);
+
+    // На мобилке подстраиваем aspect-ratio под реальный размер (десктоп — сетка стабильна)
+    setupMediaAspect(card);
     
     return card;
 }
@@ -840,15 +815,80 @@ function generateStars(max = 10) {
     return html;
 }
 
-// Настройка голосования
-function setupVoting(card, participantId) {
-    const starsContainers = card.querySelectorAll('.stars[data-criteria]');
-    const submitBtn = card.querySelector('.submit-vote');
-    const successMsg = card.querySelector('.vote-success');
-    const alreadyMsg = card.querySelector('.vote-already');
-    
+function inferMediaTypeFromUrl(url) {
+    if (!url) return 'image';
+    if (/\.(mp4|webm|ogg)(\?.*)?$/i.test(url)) return 'video';
+    return 'image';
+}
+
+function renderWorkItem(work, battleId, participantId, idx) {
+    const url = work?.url || '';
+    const type = work?.type || inferMediaTypeFromUrl(url);
+    const label = work?.label || `Работа ${idx + 1}`;
+
+    const safeUrl = escapeHtml(url);
+    const safePid = escapeHtml(participantId);
+    const safeLabel = escapeHtml(label);
+
+    const mediaHtml = url
+        ? renderMedia({ type, url })
+        : 'Медиа скоро появится...';
+
+    return `
+        <div class="media-item" data-battle="${battleId}" data-participant="${safePid}" data-work-url="${safeUrl}">
+            <div class="media-label">${safeLabel}</div>
+            <div class="media-content">${mediaHtml}</div>
+
+            <div class="voting-section voting-section--work">
+                <div class="voting-title">Оцените эту работу</div>
+                <div class="voting-criteria">
+                    <div class="criteria-item">
+                        <div class="criteria-label">
+                            <span>Креативность (1–10)</span>
+                            <span class="selected-value" data-criteria="creativity">—</span>
+                        </div>
+                        <div class="stars" data-criteria="creativity">
+                            ${generateStars(10)}
+                        </div>
+                    </div>
+                    <div class="criteria-item">
+                        <div class="criteria-label">
+                            <span>Применимость (1–10)</span>
+                            <span class="selected-value" data-criteria="applicability">—</span>
+                        </div>
+                        <div class="stars" data-criteria="applicability">
+                            ${generateStars(10)}
+                        </div>
+                    </div>
+                </div>
+                <button class="submit-vote" disabled>Отправить оценку</button>
+                <div class="vote-success" style="display:none;">✓ Спасибо! Ваша оценка учтена.</div>
+                <div class="vote-already" style="display:none; text-align:center; color:#888; margin-top:12px;">
+                    Вы уже голосовали за это окно.
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+// Голосование на каждое медиа-окно (1 раз на окно в рамках браузера)
+function setupWorkVoting(mediaItemEl) {
+    const battleId = parseInt(mediaItemEl.dataset.battle, 10);
+    const participantId = mediaItemEl.dataset.participant;
+    const workUrl = mediaItemEl.dataset.workUrl;
+
+    const starsContainers = mediaItemEl.querySelectorAll('.stars[data-criteria]');
+    const submitBtn = mediaItemEl.querySelector('.submit-vote');
+    const successMsg = mediaItemEl.querySelector('.vote-success');
+    const alreadyMsg = mediaItemEl.querySelector('.vote-already');
+
+    if (!battleId || !participantId || !workUrl) {
+        if (submitBtn) submitBtn.disabled = true;
+        return;
+    }
+
     let selectedVotes = { creativity: 0, applicability: 0 };
-    
+
     function setStarsUI(stars, value) {
         stars.forEach((s, index) => {
             if (index < value) s.classList.add('active');
@@ -863,15 +903,15 @@ function setupVoting(card, participantId) {
         });
     }
 
-    // Если уже голосовали — показываем и блокируем
-    const existing = getUserVote(participantId);
+    // Если уже голосовали за это окно — показываем и блокируем
+    const existing = getWorkVote(battleId, participantId, workUrl);
     if (existing) {
         starsContainers.forEach(container => {
             const criteria = container.dataset.criteria;
             const stars = container.querySelectorAll('.star');
             const value = criteria === 'creativity' ? existing.creativity : existing.applicability;
             setStarsUI(stars, value);
-            const span = card.querySelector(`.selected-value[data-criteria="${criteria}"]`);
+            const span = mediaItemEl.querySelector(`.selected-value[data-criteria="${criteria}"]`);
             if (span) span.textContent = value;
             disableStars(stars);
         });
@@ -880,11 +920,11 @@ function setupVoting(card, participantId) {
         return;
     }
 
-    // Обработка кликов по звёздам (1..10) для каждого критерия
+    // Выбор звёзд
     starsContainers.forEach(container => {
         const criteria = container.dataset.criteria;
         const stars = container.querySelectorAll('.star');
-        const span = card.querySelector(`.selected-value[data-criteria="${criteria}"]`);
+        const span = mediaItemEl.querySelector(`.selected-value[data-criteria="${criteria}"]`);
 
         stars.forEach(star => {
             star.addEventListener('click', () => {
@@ -899,47 +939,21 @@ function setupVoting(card, participantId) {
             });
         });
     });
-    
-    // Отправка голоса
+
     submitBtn.addEventListener('click', () => {
         if (selectedVotes.creativity > 0 && selectedVotes.applicability > 0) {
-            const ok = submitVote(participantId, selectedVotes);
+            const ok = submitWorkVote(battleId, participantId, workUrl, selectedVotes);
             if (!ok) {
-                // На случай гонок/повторного клика
                 if (alreadyMsg) alreadyMsg.style.display = 'block';
-                starsContainers.forEach(container => disableStars(container.querySelectorAll('.star')));
+                starsContainers.forEach(c => disableStars(c.querySelectorAll('.star')));
                 submitBtn.style.display = 'none';
                 return;
             }
             submitBtn.style.display = 'none';
             successMsg.style.display = 'block';
-            
-            // Обновляем "ваша оценка" в шапке карточки
-            updateUserScore(participantId);
-            starsContainers.forEach(container => disableStars(container.querySelectorAll('.star')));
+            starsContainers.forEach(c => disableStars(c.querySelectorAll('.star')));
         }
     });
-}
-
-// Отправка голоса
-function submitVote(participantId, voteData) {
-    if (hasUserVoted(participantId)) return false;
-    votes[participantId] = {
-        creativity: voteData.creativity,
-        applicability: voteData.applicability,
-        timestamp: Date.now()
-    };
-    saveVotes();
-    console.log('Vote submitted:', participantId, voteData);
-    return true;
-}
-
-function updateUserScore(participantId) {
-    const vote = getUserVote(participantId);
-    const elC = document.querySelector(`.score-value[data-score-participant="${participantId}"][data-score-criteria="creativity"]`);
-    const elA = document.querySelector(`.score-value[data-score-participant="${participantId}"][data-score-criteria="applicability"]`);
-    if (elC) elC.textContent = vote ? `${vote.creativity}/10` : '—';
-    if (elA) elA.textContent = vote ? `${vote.applicability}/10` : '—';
 }
 
 // Извлечение YouTube ID
@@ -954,8 +968,9 @@ function extractYouTubeId(url) {
 // ========================================
 
 // Важно: без регистрации и сервера комментарии сохраняются ТОЛЬКО в браузере пользователя (localStorage).
-// Формат: { [participantId]: { name, text, timestamp } } — один комментарий на участника.
-const COMMENTS_KEY = 'ai_battles_comments_v2';
+// Формат: { ["battleId::participantId"]: { name, text, timestamp } } — один комментарий на участника в рамках таба.
+const COMMENTS_KEY = 'ai_battles_comments_v3';
+const LEGACY_COMMENTS_KEY_V2 = 'ai_battles_comments_v2';
 const LEGACY_COMMENTS_KEY = 'ai_battles_comments';
 const comments = loadComments();
 
@@ -964,6 +979,20 @@ function loadComments() {
         const raw = localStorage.getItem(COMMENTS_KEY);
         const parsed = raw ? JSON.parse(raw) : null;
         if (parsed && typeof parsed === 'object') return parsed;
+
+        // Миграция с v2 (там было { participantId: {name,text,timestamp} })
+        const legacyV2Raw = localStorage.getItem(LEGACY_COMMENTS_KEY_V2);
+        const legacyV2Parsed = legacyV2Raw ? JSON.parse(legacyV2Raw) : null;
+        if (legacyV2Parsed && typeof legacyV2Parsed === 'object') {
+            const migrated = {};
+            for (const [pid, c] of Object.entries(legacyV2Parsed)) {
+                if (c && typeof c.name === 'string' && typeof c.text === 'string') {
+                    migrated[`1::${pid}`] = { name: c.name, text: c.text, timestamp: c.timestamp || Date.now() };
+                }
+            }
+            localStorage.setItem(COMMENTS_KEY, JSON.stringify(migrated));
+            return migrated;
+        }
 
         // Миграция со старого ключа (там был массив комментариев на участника)
         const legacyRaw = localStorage.getItem(LEGACY_COMMENTS_KEY);
@@ -974,7 +1003,7 @@ function loadComments() {
                 if (Array.isArray(arr) && arr.length > 0) {
                     const last = arr.slice().sort((a, b) => (b?.timestamp || 0) - (a?.timestamp || 0))[0];
                     if (last && typeof last.name === 'string' && typeof last.text === 'string') {
-                        migrated[pid] = { name: last.name, text: last.text, timestamp: last.timestamp || Date.now() };
+                        migrated[`1::${pid}`] = { name: last.name, text: last.text, timestamp: last.timestamp || Date.now() };
                     }
                 }
             }
@@ -993,25 +1022,29 @@ function saveComments() {
     localStorage.setItem(COMMENTS_KEY, JSON.stringify(comments));
 }
 
-function getUserComment(participantId) {
-    const c = comments[participantId];
+function makeCommentKey(battleId, participantId) {
+    return `${battleId}::${participantId}`;
+}
+
+function getUserComment(battleId, participantId) {
+    const c = comments[makeCommentKey(battleId, participantId)];
     if (!c || typeof c !== 'object') return null;
     if (typeof c.name !== 'string' || typeof c.text !== 'string') return null;
     return { name: c.name, text: c.text, timestamp: c.timestamp || Date.now() };
 }
 
-function hasUserComment(participantId) {
-    return getUserComment(participantId) !== null;
+function hasUserComment(battleId, participantId) {
+    return getUserComment(battleId, participantId) !== null;
 }
 
 // Получить количество комментариев
-function getCommentsCount(participantId) {
-    return hasUserComment(participantId) ? 1 : 0;
+function getCommentsCount(battleId, participantId) {
+    return hasUserComment(battleId, participantId) ? 1 : 0;
 }
 
 // Рендер комментариев
-function renderComments(participantId) {
-    const c = getUserComment(participantId);
+function renderComments(battleId, participantId) {
+    const c = getUserComment(battleId, participantId);
     if (!c) {
         return '<div class="no-comments">Пока нет комментариев. Будьте первым!</div>';
     }
@@ -1028,10 +1061,10 @@ function renderComments(participantId) {
 }
 
 // Добавить комментарий
-function addComment(participantId, name, text) {
-    if (hasUserComment(participantId)) return false;
+function addComment(battleId, participantId, name, text) {
+    if (hasUserComment(battleId, participantId)) return false;
 
-    comments[participantId] = {
+    comments[makeCommentKey(battleId, participantId)] = {
         name: name.trim(),
         text: text.trim(),
         timestamp: Date.now()
@@ -1043,18 +1076,12 @@ function addComment(participantId, name, text) {
 }
 
 // Обновить список комментариев на странице
-function updateCommentsList(participantId) {
-    const commentsList = document.getElementById(`comments-${participantId}`);
-    if (commentsList) {
-        commentsList.innerHTML = renderComments(participantId);
-    }
-    
-    // Обновляем счётчик
-    const card = document.querySelector(`[data-participant="${participantId}"]`).closest('.participant-card');
+function updateCommentsList(card, battleId, participantId) {
+    const commentsList = card.querySelector(`#comments-${battleId}-${participantId}`);
+    if (commentsList) commentsList.innerHTML = renderComments(battleId, participantId);
+
     const commentsTitle = card.querySelector('.comments-title');
-    if (commentsTitle) {
-        commentsTitle.textContent = `Комментарии (${getCommentsCount(participantId)})`;
-    }
+    if (commentsTitle) commentsTitle.textContent = `Комментарии (${getCommentsCount(battleId, participantId)})`;
 }
 
 // Экранирование HTML
@@ -1098,14 +1125,14 @@ function formatDate(timestamp) {
 }
 
 // Настройка формы комментариев
-function setupCommentForm(card, participantId) {
+function setupCommentForm(card, battleId, participantId) {
     const submitBtn = card.querySelector('.submit-comment');
     const nameInput = card.querySelector('.comment-name');
     const textArea = card.querySelector('.comment-text');
     const alreadyMsg = card.querySelector('.comment-already');
 
     // Если уже комментировали — блокируем форму
-    const existing = getUserComment(participantId);
+    const existing = getUserComment(battleId, participantId);
     if (existing) {
         if (nameInput) nameInput.value = existing.name;
         if (textArea) textArea.value = existing.text;
@@ -1140,7 +1167,7 @@ function setupCommentForm(card, participantId) {
         }
         
         // Добавляем комментарий
-        const ok = addComment(participantId, name, text);
+        const ok = addComment(battleId, participantId, name, text);
         if (!ok) {
             if (alreadyMsg) alreadyMsg.style.display = 'block';
             submitBtn.style.display = 'none';
@@ -1150,7 +1177,7 @@ function setupCommentForm(card, participantId) {
         }
         
         // Обновляем список
-        updateCommentsList(participantId);
+        updateCommentsList(card, battleId, participantId);
         
         // Блокируем форму навсегда для этого участника (1 раз)
         nameInput.disabled = true;
