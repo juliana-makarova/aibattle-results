@@ -119,7 +119,9 @@
                 #6600ff
             );
             background-size: 300% 300%;
-            animation: tabBorderFlow 4s linear infinite;
+            /* Перелив рамки запускаем только на hover (см. ниже) */
+            animation: tabBorderFlow 3.2s linear infinite;
+            animation-play-state: paused;
             /* вырезаем центр, чтобы осталось только "кольцо" */
             mask:
                 linear-gradient(#000 0 0) content-box,
@@ -133,9 +135,31 @@
             opacity: 0.85;
         }
 
+        /* Пробегающий блик по кнопкам с обводкой (неактивные) */
+        .tab::after {
+            content: "";
+            position: absolute;
+            inset: -40% -60%;
+            background: linear-gradient(
+                120deg,
+                transparent 40%,
+                rgba(255, 255, 255, 0.22) 50%,
+                transparent 60%
+            );
+            transform: translateX(-60%) rotate(0deg);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .tab:not(.active)::after {
+            opacity: 0.7;
+            animation: tabShineSweep 2.8s ease-in-out infinite;
+        }
+
         .tab:hover::before {
             opacity: 1;
-            animation-duration: 2.8s;
+            animation-play-state: running;
+            animation-duration: 2.4s;
         }
 
         .tab.active {
@@ -143,13 +167,13 @@
             border-color: transparent;
         }
 
-        /* В нижнем наборе табов активный таб выделяем серой обводкой */
-        .tabs--bottom .tab.active {
-            border-color: #444;
-        }
-
         .tab.active::before {
             opacity: 0; /* активный таб и так с заливкой */
+            animation: none;
+        }
+
+        .tab.active::after {
+            opacity: 0;
             animation: none;
         }
 
@@ -157,6 +181,12 @@
             0% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
             100% { background-position: 0% 50%; }
+        }
+
+        @keyframes tabShineSweep {
+            0% { transform: translateX(-60%) rotate(0deg); }
+            60% { transform: translateX(60%) rotate(0deg); }
+            100% { transform: translateX(60%) rotate(0deg); }
         }
 
         /* TASK BRIEF */
