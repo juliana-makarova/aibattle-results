@@ -1053,24 +1053,24 @@ function setupMediaAspect(card) {
 // Рендер медиа
 function renderMedia(media) {
     if (media.type === 'image') {
-        return `<img src="${media.url}" alt="Media" />`;
+        return `<img src="${media.url}" alt="Media" loading="lazy" decoding="async" />`;
     } else if (media.type === 'video') {
         // Можно использовать YouTube embed или video tag
         if (media.url.includes('youtube.com') || media.url.includes('youtu.be')) {
             const videoId = extractYouTubeId(media.url);
-            return `<iframe src="https://www.youtube.com/embed/${videoId}" frameborder="0" allowfullscreen></iframe>`;
+            return `<iframe src="https://www.youtube.com/embed/${videoId}" frameborder="0" allowfullscreen loading="lazy"></iframe>`;
         }
         // Локальные/прямые mp4/webm/ogg
         if (/\.(mp4|webm|ogg)(\?.*)?$/i.test(media.url)) {
             return `
-                <video controls playsinline preload="metadata">
+                <video controls playsinline preload="none">
                     <source src="${media.url}" />
                     Ваш браузер не поддерживает видео.
                 </video>
             `;
         }
         // Фоллбек (если передали ссылку на картинку как "video" или другое)
-        return `<img src="${media.url}" alt="Video placeholder" />`;
+        return `<img src="${media.url}" alt="Video placeholder" loading="lazy" decoding="async" />`;
     }
     return 'Медиа загружается...';
 }
