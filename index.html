@@ -1005,8 +1005,74 @@ function createParticipantCard(participant, battleId) {
 
     // На мобилке подстраиваем aspect-ratio под реальный размер (десктоп — сетка стабильна)
     setupMediaAspect(card);
+
+    // Обложки видео: показываем первый кадр, чтобы окна не были пустыми
+    setupVideoPosters(card);
     
     return card;
+}
+
+function setupVideoPosters(root) {
+    const videos = root.querySelectorAll('video[data-autoposter="1"]');
+
+    const getCache = (key) => {
+        try { return localStorage.getItem(key) || sessionStorage.getItem(key); } catch { return null; }
+    };
+    const setCache = (key, val) => {
+        try { localStorage.setItem(key, val); return; } catch {}
+        try { sessionStorage.setItem(key, val); } catch {}
+    };
+
+    videos.forEach(video => {
+        if (video.getAttribute('poster')) return;
+
+        const srcEl = video.querySelector('source');
+        const src = srcEl ? srcEl.getAttribute('src') : null;
+        if (!src) return;
+
+        const cacheKey = `ai_battles_poster::${src}`;
+        const cached = getCache(cacheKey);
+        if (cached) {
+            video.setAttribute('poster', cached);
+            return;
+        }
+
+        // Пытаемся снять первый кадр (работает для локальных файлов сайта; для некоторых внешних хостингов может блокироваться CORS)
+        const makePoster = async () => {
+            try {
+                // Дождаться первого кадра (некоторые браузеры требуют seek)
+                if (video.readyState < 2) {
+                    await new Promise(res => video.addEventListener('loadeddata', res, { once: true }));
+                }
+
+                // Подстрахуемся: сделаем seek к началу
+                try {
+                    video.currentTime = 0.01;
+                    await new Promise(res => video.addEventListener('seeked', res, { once: true }));
+                } catch {}
+
+                const w = video.videoWidth;
+                const h = video.videoHeight;
+                if (!w || !h) return;
+
+                const canvas = document.createElement('canvas');
+                canvas.width = w;
+                canvas.height = h;
+                const ctx = canvas.getContext('2d');
+                if (!ctx) return;
+                ctx.drawImage(video, 0, 0, w, h);
+
+                const dataUrl = canvas.toDataURL('image/jpeg', 0.82);
+                video.setAttribute('poster', dataUrl);
+                setCache(cacheKey, dataUrl);
+            } catch {
+                // молча игнорируем: лучше пустое окно, чем падение
+            }
+        };
+
+        // Не блокируем рендер: запускаем после небольшого тика
+        setTimeout(makePoster, 0);
+    });
 }
 
 // Подстройка aspect-ratio под реальные размеры картинки/видео (по умолчанию 1:1, см. CSS)
@@ -1063,7 +1129,7 @@ function renderMedia(media) {
         // Локальные/прямые mp4/webm/ogg
         if (/\.(mp4|webm|ogg)(\?.*)?$/i.test(media.url)) {
             return `
-                <video controls playsinline preload="none">
+                <video controls playsinline preload="metadata" data-autoposter="1">
                     <source src="${media.url}" />
                     Ваш браузер не поддерживает видео.
                 </video>
