@@ -94,6 +94,19 @@
             font-size: 16px;
         }
 
+        .task-heading {
+            color: #ff0066;
+            font-weight: 800;
+        }
+
+        .task-list {
+            margin-top: 12px;
+            padding-left: 18px;
+            color: #ccc;
+            line-height: 1.8;
+            font-size: 16px;
+        }
+
         /* PARTICIPANTS */
         .participants {
             display: flex;
@@ -488,11 +501,11 @@
     <!-- TASK BRIEF -->
     <div class="task-brief">
         <h2>Техническое задание</h2>
-        <p id="task-description">
+        <div id="task-description">
             Разработать концепцию брендинга для нового ресторана премиум-класса в центре Сочи. 
             Целевая аудитория: бизнес-туристы и состоятельные местные жители 30-50 лет. 
             Нужно создать: логотип, фирменный стиль, концепцию интерьера.
-        </p>
+        </div>
     </div>
 
     <!-- PARTICIPANTS -->
@@ -515,7 +528,20 @@
 const BATTLES_CONFIG = {
     1: {
         title: "Задание #1: Мерч",
-        task: "Описание задания #1 (поменяйте текст под реальное ТЗ).",
+        taskHtml: `
+            <div>
+                <span class="task-heading">Бриф для участников:</span><br/>
+                Создайте концепцию брендированного мерча для ресторана Karma.<br/><br/>
+
+                <span class="task-heading">Требования:</span>
+                <ul class="task-list">
+                    <li>Изучить фирменный стиль Karma на <a href="https://karmaeasyfood.com" target="_blank" rel="noopener noreferrer">karmaeasyfood.com</a></li>
+                    <li>Мерч должен соответствовать существующей визуальной айдентике</li>
+                    <li>Учесть «оффлайн» стиль бренда</li>
+                    <li>Формат: Визуализация 2-5 позиций мерча (футболки, кепки, стикерпаки, посуда и т.д.)</li>
+                </ul>
+            </div>
+        `,
         participants: [
             {
                 id: "sabdes",
@@ -570,14 +596,14 @@ const BATTLES_CONFIG = {
     },
     2: {
         title: "Задание #2: Меню",
-        task: "Описание задания #2 (поменяйте текст под реальное ТЗ).",
+        taskHtml: "Описание задания #2 (поменяйте текст под реальное ТЗ).",
         participants: [
             // можно указывать другой набор участников, чем в задании #1
         ]
     },
     3: {
         title: "Задание #3: Локация",
-        task: "Описание задания #3 (поменяйте текст под реальное ТЗ).",
+        taskHtml: "Описание задания #3 (поменяйте текст под реальное ТЗ).",
         participants: [
             // можно указывать другой набор участников, чем в задании #1
         ]
@@ -663,7 +689,8 @@ function renderBattle(battleId) {
     const battle = BATTLES_CONFIG[battleId];
     
     // Обновляем ТЗ
-    document.getElementById('task-description').textContent = battle.task;
+    const taskEl = document.getElementById('task-description');
+    taskEl.innerHTML = battle.taskHtml || '';
     
     // Рендерим участников
     const container = document.getElementById('participants-container');
