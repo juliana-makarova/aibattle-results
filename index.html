@@ -104,6 +104,15 @@
             font-size: 16px;
         }
 
+        .task-brief a {
+            color: #6600ff;
+            text-decoration: none;
+        }
+
+        .task-brief a:hover {
+            text-decoration: underline;
+        }
+
         /* PARTICIPANTS */
         .participants {
             display: flex;
@@ -140,13 +149,13 @@
 
         .participant-handle {
             display: inline-block;
-            color: #888;
+            color: #6600ff;
             font-size: 14px;
             text-decoration: none;
         }
 
         .participant-handle:hover {
-            color: #ff0066;
+            color: #6600ff;
             text-decoration: underline;
         }
 
@@ -620,7 +629,13 @@ const BATTLES_CONFIG = {
         title: "Задание #2: Меню",
         taskHtml: "Описание задания #2 (поменяйте текст под реальное ТЗ).",
         participants: [
-            // можно указывать другой набор участников, чем в задании #1
+            {
+                id: "sabdes",
+                name: "Сергей Большаков",
+                handle: "@sabdes",
+                telegramUrl: "https://t.me/sabdes",
+                works: []
+            }
         ]
     },
     3: {
