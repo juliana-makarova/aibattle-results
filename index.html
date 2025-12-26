@@ -85,6 +85,9 @@
             background-size: 300% 300%;
             animation: tabBorderFlow 4s linear infinite;
             /* вырезаем центр, чтобы осталось только "кольцо" */
+            mask:
+                linear-gradient(#000 0 0) content-box,
+                linear-gradient(#000 0 0);
             -webkit-mask:
                 linear-gradient(#000 0 0) content-box,
                 linear-gradient(#000 0 0);
