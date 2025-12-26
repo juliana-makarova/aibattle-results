@@ -878,9 +878,16 @@ function submitWorkVote(battleId, participantId, workUrl, voteData) {
 
 // Инициализация
 document.addEventListener('DOMContentLoaded', () => {
-    renderBattle(currentBattle);
     setupTabs();
+    setActiveTabs(currentBattle);
+    renderBattle(currentBattle);
 });
+
+function setActiveTabs(battleId) {
+    document.querySelectorAll('.tab').forEach(t => {
+        t.classList.toggle('active', parseInt(t.dataset.battle, 10) === battleId);
+    });
+}
 
 // Переключение табов
 function setupTabs() {
@@ -889,7 +896,7 @@ function setupTabs() {
         tab.addEventListener('click', () => {
             const battle = parseInt(tab.dataset.battle, 10);
             // Подсвечиваем активный таб во ВСЕХ наборах кнопок (верх/низ)
-            tabs.forEach(t => t.classList.toggle('active', parseInt(t.dataset.battle, 10) === battle));
+            setActiveTabs(battle);
             currentBattle = battle;
             renderBattle(currentBattle);
         });
