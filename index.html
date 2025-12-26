@@ -43,6 +43,42 @@
             margin-bottom: 20px;
         }
 
+        .battle-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 24px;
+            max-width: 720px;
+            margin: 0 auto;
+            text-align: left;
+        }
+
+        .battle-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 18px;
+            line-height: 1.3;
+            color: #888;
+            white-space: nowrap;
+        }
+
+        .battle-meta-emoji {
+            font-size: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .battle-meta {
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+                gap: 10px;
+            }
+            .battle-meta-item {
+                white-space: normal;
+            }
+        }
+
         /* TABS */
         .tabs {
             display: flex;
@@ -561,10 +597,16 @@
     <div class="header">
         <h1>AI-BATTLE#2: KARMA</h1>
         <div class="battle-number">
-            ⏰<br/>
-            До 28.12.2024 23:59<br/>
-            💰<br/>
-            Приз за каждое задание: 7000₽
+            <div class="battle-meta">
+                <div class="battle-meta-item">
+                    <span class="battle-meta-emoji">⏰</span>
+                    <span>До 28.12.2024 23:59</span>
+                </div>
+                <div class="battle-meta-item">
+                    <span class="battle-meta-emoji">💰</span>
+                    <span>Приз за каждое задание: 7000₽</span>
+                </div>
+            </div>
         </div>
     </div>
 
