@@ -734,7 +734,15 @@ const BATTLES_CONFIG = {
                 name: "Кирилл Ползиков",
                 handle: "@kirillpolzikov",
                 telegramUrl: "https://t.me/kirillpolzikov",
-                works: []
+                works: [
+                    { url: "assets/battle-1/kirillpolzikov/work-01.jpeg" },
+                    { url: "assets/battle-1/kirillpolzikov/work-02.png" },
+                    { url: "assets/battle-1/kirillpolzikov/work-03.jpeg" },
+                    { url: "assets/battle-1/kirillpolzikov/work-04.jpeg" },
+                    { url: "assets/battle-1/kirillpolzikov/work-05.png" },
+                    { url: "assets/battle-1/kirillpolzikov/work-06.jpeg" },
+                    { url: "assets/battle-1/kirillpolzikov/work-07.png" }
+                ]
             },
             {
                 id: "OlgaDorr",
@@ -822,6 +830,18 @@ const BATTLES_CONFIG = {
                     { url: "assets/battle-2/Lyubashka_ph/work-05.jpg" },
                     { url: "assets/battle-2/Lyubashka_ph/work-06.jpg?v=20251226" },
                     { url: "assets/battle-2/Lyubashka_ph/work-07.jpg" }
+                ]
+            },
+            {
+                id: "kirillpolzikov",
+                name: "Кирилл Ползиков",
+                handle: "@kirillpolzikov",
+                telegramUrl: "https://t.me/kirillpolzikov",
+                works: [
+                    { url: "assets/battle-2/kirillpolzikov/work-01.jpeg" },
+                    { url: "assets/battle-2/kirillpolzikov/work-02.png" },
+                    { url: "assets/battle-2/kirillpolzikov/work-03.mov" },
+                    { url: "assets/battle-2/kirillpolzikov/work-04.mov" }
                 ]
             }
         ]
@@ -1134,11 +1154,12 @@ function renderMedia(media) {
             const videoId = extractYouTubeId(media.url);
             return `<iframe src="https://www.youtube.com/embed/${videoId}" frameborder="0" allowfullscreen loading="lazy"></iframe>`;
         }
-        // Локальные/прямые mp4/webm/ogg
-        if (/\.(mp4|webm|ogg)(\?.*)?$/i.test(media.url)) {
+        // Локальные/прямые mp4/webm/ogg/mov
+        if (/\.(mp4|webm|ogg|mov)(\?.*)?$/i.test(media.url)) {
+            const typeAttr = media.url.toLowerCase().includes('.mov') ? 'video/quicktime' : 'video/mp4';
             return `
                 <video controls playsinline preload="metadata" data-autoposter="1">
-                    <source src="${media.url}" />
+                    <source src="${media.url}" type="${typeAttr}" />
                     Ваш браузер не поддерживает видео.
                 </video>
             `;
@@ -1160,7 +1181,7 @@ function generateStars(max = 10) {
 
 function inferMediaTypeFromUrl(url) {
     if (!url) return 'image';
-    if (/\.(mp4|webm|ogg)(\?.*)?$/i.test(url)) return 'video';
+    if (/\.(mp4|webm|ogg|mov)(\?.*)?$/i.test(url)) return 'video';
     return 'image';
 }
 
