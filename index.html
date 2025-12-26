@@ -60,19 +60,59 @@
         .tab {
             padding: 12px 30px;
             background: #1a1a1a;
-            border: 2px solid #333;
+            border: 2px solid transparent;
             border-radius: 8px;
             cursor: pointer;
             transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
         }
 
-        .tab:hover {
-            border-color: #ff0066;
+        /* Градиентная обводка + "переливание" */
+        .tab::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: 8px;
+            padding: 2px; /* толщина обводки */
+            background: linear-gradient(
+                120deg,
+                #ff0066,
+                #6600ff,
+                #ff0066,
+                #6600ff
+            );
+            background-size: 300% 300%;
+            animation: tabBorderFlow 4s linear infinite;
+            /* вырезаем центр, чтобы осталось только "кольцо" */
+            -webkit-mask:
+                linear-gradient(#000 0 0) content-box,
+                linear-gradient(#000 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+            opacity: 0.85;
+        }
+
+        .tab:hover::before {
+            opacity: 1;
+            animation-duration: 2.8s;
         }
 
         .tab.active {
             background: linear-gradient(135deg, #ff0066, #6600ff);
             border-color: transparent;
+        }
+
+        .tab.active::before {
+            opacity: 0; /* активный таб и так с заливкой */
+            animation: none;
+        }
+
+        @keyframes tabBorderFlow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
         }
 
         /* TASK BRIEF */
