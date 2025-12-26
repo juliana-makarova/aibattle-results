@@ -642,9 +642,9 @@
 
     <!-- TABS -->
     <div class="tabs">
-        <div class="tab active" data-battle="1">Задание #1: Мерч</div>
-        <div class="tab" data-battle="2">Задание #2: Меню</div>
-        <div class="tab" data-battle="3">Задание #3: Локация</div>
+        <div class="tab active" data-battle="1">Задание #1: ДИЗАЙН МЕРЧА</div>
+        <div class="tab" data-battle="2">Задание #2: AI-ГЕНЕРАЦИЯ МЕНЮ</div>
+        <div class="tab" data-battle="3">Задание #3: ПРЕЗЕНТАЦИЯ ЛОКАЦИИ</div>
     </div>
 
     <!-- TASK BRIEF -->
@@ -666,9 +666,9 @@
     <div class="cta-section">
         <div class="cta-title">Оцените работы других брифов</div>
         <div class="tabs tabs--bottom">
-            <div class="tab" data-battle="1">Задание #1: Мерч</div>
-            <div class="tab" data-battle="2">Задание #2: Меню</div>
-            <div class="tab" data-battle="3">Задание #3: Локация</div>
+            <div class="tab" data-battle="1">Задание #1: ДИЗАЙН МЕРЧА</div>
+            <div class="tab" data-battle="2">Задание #2: AI-ГЕНЕРАЦИЯ МЕНЮ</div>
+            <div class="tab" data-battle="3">Задание #3: ПРЕЗЕНТАЦИЯ ЛОКАЦИИ</div>
         </div>
     </div>
 
@@ -686,7 +686,7 @@
 
 const BATTLES_CONFIG = {
     1: {
-        title: "Задание #1: Мерч",
+        title: "Задание #1: ДИЗАЙН МЕРЧА",
         taskHtml: `
             <div>
                 <span class="task-heading">Бриф для участников:</span><br/>
@@ -774,8 +774,34 @@ const BATTLES_CONFIG = {
         ]
     },
     2: {
-        title: "Задание #2: Меню",
-        taskHtml: "Описание задания #2 (поменяйте текст под реальное ТЗ).",
+        title: "Задание #2: AI-ГЕНЕРАЦИЯ МЕНЮ",
+        taskHtml: `
+            <div>
+                <span class="task-heading">Бриф для участников:</span><br/>
+                Создайте визуальный контент для блюда "Микс: Биф" из меню Karma.<br/><br/>
+
+                <span class="task-heading">Описание блюда:</span><br/>
+                <div style="color:#ccc; line-height:1.8; font-size:16px;">
+                    "Микс: Биф" 400г<br/>
+                    Котлета из мраморной говядины, чеддер, бекон,<br/>
+                    свежие овощи, хлеб и горчичный соус
+                </div>
+                <br/>
+
+                <span class="task-heading">Гарнир на выбор:</span>
+                <ul class="task-list">
+                    <li>Гречка 120г</li>
+                    <li>Картофель бейби 120г</li>
+                    <li>Рис 120г</li>
+                </ul>
+
+                <span class="task-heading">Deliverables:</span>
+                <ul class="task-list">
+                    <li>Фото блюда — реалистичное/креативное изображение</li>
+                    <li>Видео блюда — динамическая видео-презентация (по желанию)</li>
+                </ul>
+            </div>
+        `,
         participants: [
             {
                 id: "sabdes",
@@ -787,7 +813,7 @@ const BATTLES_CONFIG = {
         ]
     },
     3: {
-        title: "Задание #3: Локация",
+        title: "Задание #3: ПРЕЗЕНТАЦИЯ ЛОКАЦИИ",
         taskHtml: "Описание задания #3 (поменяйте текст под реальное ТЗ).",
         participants: [
             // можно указывать другой набор участников, чем в задании #1
