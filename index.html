@@ -52,6 +52,11 @@
             flex-wrap: wrap;
         }
 
+        .tabs--bottom {
+            margin-top: 40px;
+            margin-bottom: 0;
+        }
+
         .tab {
             padding: 12px 30px;
             background: #1a1a1a;
@@ -118,6 +123,19 @@
             display: flex;
             flex-direction: column;
             gap: 30px;
+        }
+
+        .cta-section {
+            margin-top: 40px;
+            padding: 26px 20px;
+            border-top: 2px solid #333;
+            text-align: center;
+        }
+
+        .cta-title {
+            font-size: 18px;
+            color: #ccc;
+            margin-bottom: 16px;
         }
 
         .participant-card {
@@ -524,6 +542,16 @@
         <!-- Карточки участников генерируются JS -->
     </div>
 
+    <!-- CTA: SWITCH TASKS -->
+    <div class="cta-section">
+        <div class="cta-title">Оцените работы других брифов</div>
+        <div class="tabs tabs--bottom">
+            <div class="tab" data-battle="1">Задание #1: Мерч</div>
+            <div class="tab" data-battle="2">Задание #2: Меню</div>
+            <div class="tab" data-battle="3">Задание #3: Локация</div>
+        </div>
+    </div>
+
     <!-- FOOTER -->
     <div class="footer">
         AI-Battles © 2024 | Эксперты решают задачи бизнеса
@@ -713,9 +741,10 @@ function setupTabs() {
     const tabs = document.querySelectorAll('.tab');
     tabs.forEach(tab => {
         tab.addEventListener('click', () => {
-            tabs.forEach(t => t.classList.remove('active'));
-            tab.classList.add('active');
-            currentBattle = parseInt(tab.dataset.battle);
+            const battle = parseInt(tab.dataset.battle, 10);
+            // Подсвечиваем активный таб во ВСЕХ наборах кнопок (верх/низ)
+            tabs.forEach(t => t.classList.toggle('active', parseInt(t.dataset.battle, 10) === battle));
+            currentBattle = battle;
             renderBattle(currentBattle);
         });
     });
