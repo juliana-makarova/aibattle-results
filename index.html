@@ -796,7 +796,8 @@ const BATTLES_CONFIG = {
                     { url: "assets/battle-1/Valit/work-01.jpg" },
                     { url: "assets/battle-1/Valit/work-02.jpg" },
                     { url: "assets/battle-1/Valit/work-03.jpg" },
-                    { url: "assets/battle-1/Valit/work-04.jpg" }
+                    { url: "assets/battle-1/Valit/work-04.jpg" },
+                    { url: "assets/battle-1/Valit/work-05.mp4" }
                 ]
             }
         ]
@@ -867,8 +868,8 @@ const BATTLES_CONFIG = {
                 works: [
                     { url: "assets/battle-2/kirillpolzikov/work-01.jpeg" },
                     { url: "assets/battle-2/kirillpolzikov/work-02.png" },
-                    { url: "assets/battle-2/kirillpolzikov/work-03.mov" },
-                    { url: "assets/battle-2/kirillpolzikov/work-04.mov" }
+                    { url: "assets/battle-2/kirillpolzikov/work-03.mp4" },
+                    { url: "assets/battle-2/kirillpolzikov/work-04.mp4" }
                 ]
             },
             {
@@ -888,7 +889,8 @@ const BATTLES_CONFIG = {
                 handle: "@Valit",
                 telegramUrl: "https://t.me/Valit",
                 works: [
-                    { url: "assets/battle-2/Valit/work-01.mp4" }
+                    { url: "assets/battle-2/Valit/work-01.mp4" },
+                    { url: "assets/battle-2/Valit/work-02.mp4" }
                 ]
             },
             {
@@ -897,7 +899,14 @@ const BATTLES_CONFIG = {
                 handle: "@nice2mitya",
                 telegramUrl: "https://t.me/nice2mitya",
                 works: [
-                    { url: "assets/battle-2/nice2mitya/work-01.mp4" }
+                    { url: "assets/battle-2/nice2mitya/work-01.jpg" },
+                    { url: "assets/battle-2/nice2mitya/work-01.mp4" },
+                    { url: "assets/battle-2/nice2mitya/work-02.jpg" },
+                    { url: "assets/battle-2/nice2mitya/work-03.jpg" },
+                    { url: "assets/battle-2/nice2mitya/work-04.jpg" },
+                    { url: "assets/battle-2/nice2mitya/work-05.jpg" },
+                    { url: "assets/battle-2/nice2mitya/work-06.mp4" },
+                    { url: "assets/battle-2/nice2mitya/work-07.mp4" }
                 ]
             }
         ]
@@ -930,7 +939,8 @@ const BATTLES_CONFIG = {
                 handle: "@Valit",
                 telegramUrl: "https://t.me/Valit",
                 works: [
-                    { url: "assets/battle-3/Valit/work-01.mp4" }
+                    { url: "assets/battle-3/Valit/work-01.mp4" },
+                    { url: "assets/battle-3/Valit/work-2.mp4" }
                 ]
             },
             {
@@ -939,7 +949,8 @@ const BATTLES_CONFIG = {
                 handle: "@nice2mitya",
                 telegramUrl: "https://t.me/nice2mitya",
                 works: [
-                    { url: "assets/battle-3/nice2mitya/work-01.mp4" }
+                    { url: "assets/battle-3/nice2mitya/work-01.mp4" },
+                    { url: "assets/battle-3/nice2mitya/work-02.mp4" }
                 ]
             }
         ]
@@ -972,7 +983,9 @@ function saveWorkVotes() {
 }
 
 function makeWorkVoteKey(battleId, participantId, workUrl) {
-    return `${battleId}::${participantId}::${workUrl}`;
+    // Голос должен привязываться к самой работе, а не к query-параметрам cache-busting (?v=...)
+    const stableUrl = String(workUrl || '').split('?')[0];
+    return `${battleId}::${participantId}::${stableUrl}`;
 }
 
 function getWorkVote(battleId, participantId, workUrl) {
@@ -1232,7 +1245,7 @@ function renderMedia(media) {
         if (/\.(mp4|webm|ogg|mov)(\?.*)?$/i.test(media.url)) {
             const typeAttr = media.url.toLowerCase().includes('.mov') ? 'video/quicktime' : 'video/mp4';
             return `
-                <video controls playsinline preload="metadata" data-autoposter="1">
+                <video controls playsinline preload="metadata" data-autoposter="1" crossorigin="anonymous">
                     <source src="${media.url}" type="${typeAttr}" />
                     Ваш браузер не поддерживает видео.
                 </video>
