@@ -1293,7 +1293,7 @@ function inferMediaTypeFromUrl(url) {
 function renderWorkItem(work, battleId, participantId, idx) {
     const url = work?.url || '';
     const type = work?.type || inferMediaTypeFromUrl(url);
-    const label = work?.label || `Работа ${idx + 1}`;
+    const label = work?.label || `Pipeline ${idx + 1}`;
 
     const safeUrl = escapeHtml(url);
     const safePid = escapeHtml(participantId);
