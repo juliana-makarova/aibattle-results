@@ -678,6 +678,7 @@
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 // ========================================
 // КОНФИГУРАЦИЯ КОНТЕНТА
@@ -976,6 +977,44 @@ const BATTLES_CONFIG = {
 };
 
 // ========================================
+// BACKEND (Supabase) — общие голоса/комментарии
+// ========================================
+// Важно: это "публичный" anon key. Он безопасен для клиентского кода при корректных RLS-политиках в Supabase.
+const SUPABASE_URL = 'https://wynmewbntmibqjoaiyve.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind5bm1ld2JudG1pYnFqb2FpeXZlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcwMDE5OTUsImV4cCI6MjA4MjU3Nzk5NX0.oyWNZzC1OzqurF8p3CjqFtJT-VLmPAj7QXGqpFyA-i4';
+
+let supabaseClient = null;
+try {
+    if (window.supabase && typeof window.supabase.createClient === 'function') {
+        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    }
+} catch (e) {
+    console.warn('Supabase init failed:', e);
+}
+
+function isBackendEnabled() {
+    return !!supabaseClient;
+}
+
+const VISITOR_ID_KEY = 'ai_battles_visitor_id_v1';
+function getVisitorId() {
+    try {
+        const existing = localStorage.getItem(VISITOR_ID_KEY);
+        if (existing) return existing;
+
+        const id = (window.crypto && typeof window.crypto.randomUUID === 'function')
+            ? window.crypto.randomUUID()
+            : `${Date.now()}-${Math.random().toString(16).slice(2)}-${Math.random().toString(16).slice(2)}`;
+
+        localStorage.setItem(VISITOR_ID_KEY, id);
+        return id;
+    } catch {
+        // Фоллбек без localStorage
+        return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    }
+}
+
+// ========================================
 // ЛОГИКА ГОЛОСОВАНИЯ (на каждое медиа-окно)
 // ========================================
 
@@ -1029,7 +1068,35 @@ function submitWorkVote(battleId, participantId, workUrl, voteData) {
         timestamp: Date.now()
     };
     saveWorkVotes();
+    // Отправляем в общий backend (не блокируем UI)
+    submitWorkVoteToBackend(battleId, participantId, workUrl, voteData);
     return true;
+}
+
+async function submitWorkVoteToBackend(battleId, participantId, workUrl, voteData) {
+    if (!isBackendEnabled()) return;
+    try {
+        const visitorId = getVisitorId();
+        const stableUrl = String(workUrl || '').split('?')[0];
+
+        const { error } = await supabaseClient
+            .from('votes')
+            .insert([{
+                battle_id: battleId,
+                participant_id: participantId,
+                work_url: stableUrl,
+                visitor_id: visitorId,
+                creativity: voteData.creativity,
+                applicability: voteData.applicability
+            }], { returning: 'minimal' });
+
+        // Если уже есть уникальная запись (тот же visitor_id+work) — игнорируем
+        if (error && error.code !== '23505') {
+            console.warn('Vote submit failed:', error);
+        }
+    } catch (e) {
+        console.warn('Vote submit exception:', e);
+    }
 }
 
 // Инициализация
@@ -1111,7 +1178,7 @@ function createParticipantCard(participant, battleId) {
         ${worksHtml}
 
         <div class="comments-section">
-            <div class="comments-title">Комментарии (${getCommentsCount(battleId, participant.id)})</div>
+            <div class="comments-title">Комментарии (${isBackendEnabled() ? '…' : getCommentsCount(battleId, participant.id)})</div>
 
             <div class="comment-form">
                 <div class="comment-input-group">
@@ -1125,7 +1192,7 @@ function createParticipantCard(participant, battleId) {
             </div>
 
             <div class="comments-list" id="comments-${battleId}-${participant.id}">
-                ${renderComments(battleId, participant.id)}
+                ${isBackendEnabled() ? '<div class="no-comments">Загрузка комментариев...</div>' : renderComments(battleId, participant.id)}
             </div>
         </div>
     `;
@@ -1135,6 +1202,7 @@ function createParticipantCard(participant, battleId) {
 
     // Комментарии: 1 на участника в рамках таба
     setupCommentForm(card, battleId, participant.id);
+    hydrateCommentsFromBackend(card, battleId, participant.id);
 
     // На мобилке подстраиваем aspect-ratio под реальный размер (десктоп — сетка стабильна)
     setupMediaAspect(card);
@@ -1614,6 +1682,78 @@ function renderComments(battleId, participantId) {
     `;
 }
 
+function renderBackendCommentsList(items) {
+    if (!Array.isArray(items) || items.length === 0) {
+        return '<div class="no-comments">Пока нет комментариев. Будьте первым!</div>';
+    }
+
+    return items.map(c => {
+        const name = escapeHtml(String(c?.name || ''));
+        const text = escapeHtml(String(c?.text || ''));
+        const ts = c?.created_at ? new Date(c.created_at).getTime() : Date.now();
+
+        return `
+            <div class="comment-item">
+                <div class="comment-header">
+                    <div class="comment-author">${name}</div>
+                    <div class="comment-date">${formatDate(ts)}</div>
+                </div>
+                <div class="comment-text">${text}</div>
+            </div>
+        `;
+    }).join('');
+}
+
+async function hydrateCommentsFromBackend(card, battleId, participantId) {
+    if (!isBackendEnabled()) return;
+    try {
+        const { data, error } = await supabaseClient
+            .from('comments')
+            .select('name,text,created_at')
+            .eq('battle_id', battleId)
+            .eq('participant_id', participantId)
+            .order('created_at', { ascending: false })
+            .limit(50);
+
+        if (error) {
+            // Если таблицы/политики ещё не созданы — просто оставим локальный режим
+            console.warn('Comments load failed:', error);
+            return;
+        }
+
+        const commentsList = card.querySelector(`#comments-${battleId}-${participantId}`);
+        if (commentsList) commentsList.innerHTML = renderBackendCommentsList(data || []);
+
+        const commentsTitle = card.querySelector('.comments-title');
+        if (commentsTitle) commentsTitle.textContent = `Комментарии (${(data || []).length})`;
+    } catch (e) {
+        console.warn('Comments load exception:', e);
+    }
+}
+
+async function submitCommentToBackend(battleId, participantId, name, text) {
+    if (!isBackendEnabled()) return;
+    try {
+        const visitorId = getVisitorId();
+        const { error } = await supabaseClient
+            .from('comments')
+            .insert([{
+                battle_id: battleId,
+                participant_id: participantId,
+                visitor_id: visitorId,
+                name: name.trim(),
+                text: text.trim()
+            }], { returning: 'minimal' });
+
+        // Уже есть комментарий от этого visitor_id — игнорируем
+        if (error && error.code !== '23505') {
+            console.warn('Comment submit failed:', error);
+        }
+    } catch (e) {
+        console.warn('Comment submit exception:', e);
+    }
+}
+
 // Добавить комментарий
 function addComment(battleId, participantId, name, text) {
     if (hasUserComment(battleId, participantId)) return false;
@@ -1729,6 +1869,10 @@ function setupCommentForm(card, battleId, participantId) {
             textArea.disabled = true;
             return;
         }
+
+        // Отправляем в общий backend (не блокируем UI) и обновляем список с сервера
+        submitCommentToBackend(battleId, participantId, name, text)
+            .finally(() => hydrateCommentsFromBackend(card, battleId, participantId));
         
         // Обновляем список
         updateCommentsList(card, battleId, participantId);
