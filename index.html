@@ -1149,62 +1149,147 @@ function setupVideoPosters(root) {
     const videos = root.querySelectorAll('video[data-autoposter="1"]');
 
     const getCache = (key) => {
-        try { return localStorage.getItem(key) || sessionStorage.getItem(key); } catch { return null; }
+        try { return sessionStorage.getItem(key); } catch { return null; }
     };
     const setCache = (key, val) => {
-        try { localStorage.setItem(key, val); return; } catch {}
-        try { sessionStorage.setItem(key, val); } catch {}
+        // dataURL может быть огромным — кешируем только в sessionStorage и только если влезает
+        try {
+            if (typeof val === 'string' && val.length < 350_000) sessionStorage.setItem(key, val);
+        } catch {}
     };
 
-    videos.forEach(video => {
-        if (video.getAttribute('poster')) return;
+    const getVideoLabel = (video) => {
+        const item = video.closest('.media-item');
+        const labelEl = item ? item.querySelector('.media-label') : null;
+        return (labelEl && labelEl.textContent) ? labelEl.textContent.trim() : 'Презентация';
+    };
 
+    const makePlaceholderPoster = (labelText) => {
+        const safe = String(labelText || 'Презентация')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+
+        const svg =
+            `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="675" viewBox="0 0 1200 675">` +
+            `<defs>` +
+            `<linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">` +
+            `<stop offset="0" stop-color="#14131f"/><stop offset="1" stop-color="#0c0b12"/>` +
+            `</linearGradient>` +
+            `</defs>` +
+            `<rect width="1200" height="675" fill="url(#bg)"/>` +
+            `<circle cx="600" cy="310" r="96" fill="rgba(140,82,255,0.18)" stroke="rgba(140,82,255,0.45)" stroke-width="4"/>` +
+            `<path d="M575 270 L575 350 L650 310 Z" fill="rgba(255,255,255,0.9)"/>` +
+            `<text x="600" y="520" text-anchor="middle" font-family="system-ui, -apple-system, Segoe UI, Roboto, Arial" font-size="44" fill="rgba(255,255,255,0.92)">` +
+            `${safe}` +
+            `</text>` +
+            `</svg>`;
+
+        return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+    };
+
+    const waitOnce = (el, event, timeoutMs = 3500) => new Promise((resolve, reject) => {
+        let t = null;
+        const onOk = () => { cleanup(); resolve(); };
+        const onErr = () => { cleanup(); reject(new Error(`video event error: ${event}`)); };
+        const cleanup = () => {
+            if (t) clearTimeout(t);
+            el.removeEventListener(event, onOk);
+            el.removeEventListener('error', onErr);
+        };
+        el.addEventListener(event, onOk, { once: true });
+        el.addEventListener('error', onErr, { once: true });
+        if (timeoutMs) t = setTimeout(() => { cleanup(); reject(new Error(`timeout waiting ${event}`)); }, timeoutMs);
+    });
+
+    const generatePosterFromFirstFrame = async (video, src, cacheKey) => {
+        // Важно: для внешних хостингов нужен корректный CORS, иначе canvas будет "tainted" и toDataURL упадёт.
+        // Мы в renderMedia уже ставим crossorigin="anonymous".
+        const prevPreload = video.getAttribute('preload');
+        try {
+            video.setAttribute('preload', 'auto');
+            // Обновим загрузку, чтобы браузер реально подтянул данные для кадра
+            try { video.load(); } catch {}
+
+            if (!video.videoWidth || !video.videoHeight) {
+                await waitOnce(video, 'loadedmetadata', 4000);
+            }
+
+            // Seek чуть дальше 0, чтобы избежать "чёрного" кадра у некоторых кодеков
+            const t = (video.duration && isFinite(video.duration)) ? Math.min(0.1, Math.max(0, video.duration - 0.1)) : 0.1;
+            try {
+                video.currentTime = t;
+                await waitOnce(video, 'seeked', 4000);
+            } catch {}
+
+            // Дождаться возможности отрисовать кадр
+            if (video.readyState < 2) {
+                await waitOnce(video, 'loadeddata', 4000);
+            }
+
+            const w = video.videoWidth;
+            const h = video.videoHeight;
+            if (!w || !h) return;
+
+            const canvas = document.createElement('canvas');
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) return;
+
+            ctx.drawImage(video, 0, 0, w, h);
+
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.82);
+            video.setAttribute('poster', dataUrl);
+            setCache(cacheKey, dataUrl);
+        } catch {
+            // Если не вышло — оставим placeholder (так не будет чёрного окна)
+        } finally {
+            if (prevPreload) video.setAttribute('preload', prevPreload);
+        }
+    };
+
+    // Генерируем постеры лениво: когда видео попадает в область видимости
+    const io = ('IntersectionObserver' in window)
+        ? new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (!entry.isIntersecting) return;
+                const video = entry.target;
+                io.unobserve(video);
+                const srcEl = video.querySelector('source');
+                const src = srcEl ? srcEl.getAttribute('src') : null;
+                if (!src) return;
+                const cacheKey = `ai_battles_poster::${src}`;
+                generatePosterFromFirstFrame(video, src, cacheKey);
+            });
+        }, { root: null, rootMargin: '250px', threshold: 0.01 })
+        : null;
+
+    videos.forEach(video => {
         const srcEl = video.querySelector('source');
         const src = srcEl ? srcEl.getAttribute('src') : null;
         if (!src) return;
 
         const cacheKey = `ai_battles_poster::${src}`;
         const cached = getCache(cacheKey);
-        if (cached) {
-            video.setAttribute('poster', cached);
+
+        // Сразу ставим placeholder, чтобы не было чёрного окна вообще
+        if (!video.getAttribute('poster')) {
+            const label = getVideoLabel(video);
+            video.setAttribute('poster', cached || makePlaceholderPoster(label));
+        }
+
+        if (cached) return;
+
+        if (io) {
+            io.observe(video);
             return;
         }
 
-        // Пытаемся снять первый кадр (работает для локальных файлов сайта; для некоторых внешних хостингов может блокироваться CORS)
-        const makePoster = async () => {
-            try {
-                // Дождаться первого кадра (некоторые браузеры требуют seek)
-                if (video.readyState < 2) {
-                    await new Promise(res => video.addEventListener('loadeddata', res, { once: true }));
-                }
-
-                // Подстрахуемся: сделаем seek к началу
-                try {
-                    video.currentTime = 0.01;
-                    await new Promise(res => video.addEventListener('seeked', res, { once: true }));
-                } catch {}
-
-                const w = video.videoWidth;
-                const h = video.videoHeight;
-                if (!w || !h) return;
-
-                const canvas = document.createElement('canvas');
-                canvas.width = w;
-                canvas.height = h;
-                const ctx = canvas.getContext('2d');
-                if (!ctx) return;
-                ctx.drawImage(video, 0, 0, w, h);
-
-                const dataUrl = canvas.toDataURL('image/jpeg', 0.82);
-                video.setAttribute('poster', dataUrl);
-                setCache(cacheKey, dataUrl);
-            } catch {
-                // молча игнорируем: лучше пустое окно, чем падение
-            }
-        };
-
-        // Не блокируем рендер: запускаем после небольшого тика
-        setTimeout(makePoster, 0);
+        // Фоллбек без IntersectionObserver: пытаемся сразу, но не блокируем рендер
+        setTimeout(() => generatePosterFromFirstFrame(video, src, cacheKey), 0);
     });
 }
 
